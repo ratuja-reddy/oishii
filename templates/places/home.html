@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">Oishii</h1>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  {% for r in restaurants %}
+    {% include "places/_restaurant_card.html" with r=r pinned=r.is_pinned %}
+  {% empty %}
+    <p class="text-gray-600">No restaurants yet — add some in the admin.</p>
+  {% endfor %}
+</div>
+{% endblock %}
