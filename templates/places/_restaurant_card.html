@@ -1,0 +1,17 @@
+<div class="bg-white rounded-2xl shadow hover:shadow-lg transition-all">
+  <div class="p-4 flex flex-col gap-2">
+    <a href="{% url 'places:restaurant_detail' r.pk %}" class="block">
+      <h2 class="text-lg font-semibold text-gray-900">{{ r.name }}</h2>
+      <p class="text-sm text-gray-500 truncate">
+        {{ r.cuisine }}{% if r.cuisine and r.city %} • {% endif %}{{ r.city }}
+        {% if r.price %} • {{ r.price }}{% endif %}
+      </p>
+    </a>
+
+    <div id="pin-btn-{{ r.id }}"
+         hx-get="{% url 'places:toggle_pin' r.pk %}"
+         hx-target="this" hx-swap="outerHTML">
+      {% include "places/_pin_button.html" with r=r pinned=pinned %}
+    </div>
+  </div>
+</div>

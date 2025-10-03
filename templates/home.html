@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="space-y-4">
+    <h1 class="text-3xl font-bold">Oishii!</h1>
+    <p class="text-gray-600">It works! Django + HTMX + Tailwind via Poetry.</p>
+
+    <button class="px-4 py-2 rounded-xl bg-gray-900 text-white"
+            hx-get="/"
+            hx-swap="outerHTML"
+            hx-target="this">
+      HTMX-ready button (does nothing yet)
+    </button>
+  </div>
+{% endblock %}
