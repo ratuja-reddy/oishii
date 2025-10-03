@@ -18,6 +18,7 @@ class ReviewForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)  # future: personalize options
         super().__init__(*args, **kwargs)
         # Optional fields
         for name in ["food", "service", "value", "atmosphere"]:
