@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import List, Pin, Restaurant
+from .models import List, Pin, Restaurant, Review
 
 
 @admin.register(Restaurant)
@@ -22,3 +22,9 @@ class PinAdmin(admin.ModelAdmin):
     list_display = ("user", "restaurant", "list", "created_at")
     search_fields = ("user__username", "restaurant__name")
     list_filter = ("created_at",)
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ("restaurant", "user", "overall_rating", "food", "service", "value", "atmosphere", "created_at")
+    search_fields = ("restaurant__name", "user__username", "text")
+    list_filter = ("overall_rating", "created_at")

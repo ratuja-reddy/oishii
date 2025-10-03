@@ -84,3 +84,31 @@ class Pin(models.Model):
 
     def __str__(self):
         return f"{self.user} → {self.restaurant}"
+
+class Review(models.Model):
+    RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]  # 1–5
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reviews"
+    )
+    restaurant = models.ForeignKey(
+        "places.Restaurant", on_delete=models.CASCADE, related_name="reviews"
+    )
+
+    overall_rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
+
+    # Optional sub-ratings
+    food = models.PositiveSmallIntegerField(choices=RATING_CHOICES, null=True, blank=True)
+    service = models.PositiveSmallIntegerField(choices=RATING_CHOICES, null=True, blank=True)
+    value = models.PositiveSmallIntegerField(choices=RATING_CHOICES, null=True, blank=True)
+    atmosphere = models.PositiveSmallIntegerField(choices=RATING_CHOICES, null=True, blank=True)
+
+    text = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "restaurant")  # one review per user per place
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.user} → {self.restaurant} ({self.overall_rating}★)"

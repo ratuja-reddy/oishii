@@ -9,8 +9,50 @@
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
-  <main class="max-w-5xl mx-auto px-4 py-6">
+
+  <!-- Main content -->
+  <main class="max-w-xl mx-auto px-4 pt-4 pb-[88px]">
     {% block content %}{% endblock %}
   </main>
+
+  <!-- Bottom nav with floating center button -->
+  <nav class="fixed bottom-0 inset-x-0 z-50 bg-white/90 backdrop-blur border-t border-gray-200 shadow">
+    <div class="relative max-w-xl mx-auto flex justify-between items-center text-sm px-8">
+
+      <!-- Left side -->
+      <div class="flex-1 flex justify-evenly">
+        <a href="{% url 'feed' %}"
+           class="flex flex-col items-center py-3 {% if active_tab == 'home' %}text-indigo-600 font-semibold{% else %}text-gray-500{% endif %}">
+          Home
+        </a>
+        <a href="{% url 'my_restaurants' %}"
+           class="flex flex-col items-center py-3 {% if active_tab == 'my' %}text-indigo-600 font-semibold{% else %}text-gray-500{% endif %}">
+          My Restaurants
+        </a>
+      </div>
+
+      <!-- Floating Review button -->
+      <div class="absolute inset-x-0 -top-7 flex justify-center pointer-events-none">
+        <a href="{% url 'review_tab' %}"
+           class="pointer-events-auto bg-indigo-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg ring-4 ring-white text-xl font-bold
+                  transition transform {% if active_tab == 'review' %}scale-105{% else %}hover:scale-105{% endif %}">
+          +
+        </a>
+      </div>
+
+      <!-- Right side -->
+      <div class="flex-1 flex justify-evenly">
+        <a href="{% url 'discover' %}"
+           class="flex flex-col items-center py-3 {% if active_tab == 'discover' %}text-indigo-600 font-semibold{% else %}text-gray-500{% endif %}">
+          Discover
+        </a>
+        <a href="{% url 'profile_me' %}"
+           class="flex flex-col items-center py-3 {% if active_tab == 'profile' %}text-indigo-600 font-semibold{% else %}text-gray-500{% endif %}">
+          My Profile
+        </a>
+      </div>
+
+    </div>
+  </nav>
 </body>
 </html>

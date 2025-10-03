@@ -4,7 +4,9 @@
   "description": "Oishi it!",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:css": "tailwindcss -i ./static/src/input.css -o ./static/css/app.css --watch",
+    "build:css": "tailwindcss -i ./static/src/input.css -o ./static/css/app.css --minify"
   },
   "repository": {
     "type": "git",
