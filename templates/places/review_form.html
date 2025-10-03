@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-2">Review: {{ restaurant.name }}</h1>
+
+<form method="post" class="space-y-3 bg-white rounded-xl p-4 shadow">
+  {% csrf_token %}
+
+  <div class="opacity-70">
+    <label class="block text-sm font-medium">Restaurant</label>
+    {{ form.restaurant }}
+    <p class="text-xs text-gray-500 mt-1">Locked to this restaurant</p>
+  </div>
+
+  <div>
+    <label class="block text-sm font-medium">Overall rating (1–5)</label>
+    {{ form.overall_rating }}
+  </div>
+
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <label class="block text-sm">Food (optional)</label>
+      {{ form.food }}
+    </div>
+    <div>
+      <label class="block text-sm">Service (optional)</label>
+      {{ form.service }}
+    </div>
+    <div>
+      <label class="block text-sm">Value (optional)</label>
+      {{ form.value }}
+    </div>
+    <div>
+      <label class="block text-sm">Atmosphere (optional)</label>
+      {{ form.atmosphere }}
+    </div>
+  </div>
+
+  <div>
+    <label class="block text-sm font-medium">Your review (optional)</label>
+    {{ form.text }}
+  </div>
+
+  <button class="px-4 py-2 rounded-xl bg-gray-900 text-white">Save review</button>
+  <a class="ml-2 text-sm text-blue-600 underline" href="{% url 'places:restaurant_detail' restaurant.pk %}">Back</a>
+</form>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-900 mb-2">Discover</h1>
+  <p class="text-gray-600 text-sm">Explore new restaurants and hidden gems</p>
+</div>
+
+{% if restaurants %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    {% for r in restaurants %}
+      {% include "places/_restaurant_card.html" with r=r pinned=False %}
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="text-center py-12">
+    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i data-lucide="compass" class="w-8 h-8 text-gray-400"></i>
+    </div>
+    <h3 class="text-lg font-semibold text-gray-900 mb-2">No restaurants yet</h3>
+    <p class="text-gray-600 mb-4">Check back later for new discoveries!</p>
+  </div>
+{% endif %}
+{% endblock %}

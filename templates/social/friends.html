@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">My Friends</h1>
+
+<h2 class="font-semibold mb-2">Following</h2>
+<ul class="space-y-1 mb-6">
+  {% for f in following %}
+    <li class="bg-white rounded-xl p-3 shadow">@{{ f.followee.username }}</li>
+  {% empty %}
+    <li class="text-gray-600">You’re not following anyone yet.</li>
+  {% endfor %}
+</ul>
+
+<h2 class="font-semibold mb-2">Followers</h2>
+<ul class="space-y-1">
+  {% for f in followers %}
+    <li class="bg-white rounded-xl p-3 shadow">@{{ f.follower.username }}</li>
+  {% empty %}
+    <li class="text-gray-600">No followers yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}
