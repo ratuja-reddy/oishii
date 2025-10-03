@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     "django_htmx",    # <— HTMX
     "social",
     "api",
-    "places",
+    "places.apps.PlacesConfig",
 ]
 
 MIDDLEWARE = [
