@@ -9,8 +9,22 @@
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
-  <main class="max-w-5xl mx-auto px-4 py-6">
+
+  <!-- ONE main, ONE content block -->
+  <main class="max-w-xl mx-auto px-4 pt-4 pb-[88px]">
     {% block content %}{% endblock %}
   </main>
+
+  <!-- Bottom tabs -->
+  <nav class="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur border-t border-gray-200">
+    <div class="max-w-xl mx-auto grid grid-cols-5 text-xs">
+      <a href="{% url 'feed' %}"           class="flex flex-col items-center py-3 {% if active_tab == 'home' %}text-black font-semibold{% else %}text-gray-500{% endif %}">Home</a>
+      <a href="{% url 'my_restaurants' %}" class="flex flex-col items-center py-3 {% if active_tab == 'my' %}text-black font-semibold{% else %}text-gray-500{% endif %}">My Restaurants</a>
+      <a href="{% url 'discover' %}"       class="flex flex-col items-center py-3 {% if active_tab == 'discover' %}text-black font-semibold{% else %}text-gray-500{% endif %}">Discover</a>
+      <a href="{% url 'profile_me' %}"     class="flex flex-col items-center py-3 {% if active_tab == 'profile' %}text-black font-semibold{% else %}text-gray-500{% endif %}">My Profile</a>
+      <a href="{% url 'friends' %}"        class="flex flex-col items-center py-3 {% if active_tab == 'friends' %}text-black font-semibold{% else %}text-gray-500{% endif %}">Friends</a>
+    </div>
+  </nav>
+
 </body>
 </html>

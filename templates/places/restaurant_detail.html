@@ -1,18 +1,54 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1 class="text-2xl font-bold">{{ r.name }}</h1>
-  <p class="text-gray-600">{{ r.address }}</p>
-  <p class="text-gray-600">
-    {% if r.cuisine %}{{ r.cuisine }} • {% endif %}
-    {% if r.category %}{{ r.get_category_display }} • {% endif %}
-    {% if r.price %}{{ r.price }}{% endif %}
-  </p>
-  {% if r.website %}
-    <p class="mt-2"><a class="text-blue-600 underline" href="{{ r.website }}" target="_blank">Website</a></p>
-  {% endif %}
-
-  <div class="mt-4" id="pin-btn-{{ r.id }}"
-       hx-get="{% url 'places:toggle_pin' r.pk %}" hx-target="this" hx-swap="outerHTML">
-    {% include "places/_pin_button.html" with r=r pinned=pinned %}
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ r.name }}</h1>
+    
+    {% if r.address %}
+      <div class="flex items-start gap-2 mb-3">
+        <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0"></i>
+        <p class="text-gray-600 text-sm">{{ r.address }}</p>
+      </div>
+    {% endif %}
+    
+    <div class="flex flex-wrap gap-2 mb-4">
+      {% if r.cuisine %}
+        <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-50 text-red-700 text-sm rounded-full">
+          <i data-lucide="utensils" class="w-3 h-3"></i>
+          {{ r.cuisine }}
+        </span>
+      {% endif %}
+      
+      {% if r.category %}
+        <span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-50 text-gray-700 text-sm rounded-full">
+          <i data-lucide="tag" class="w-3 h-3"></i>
+          {{ r.get_category_display }}
+        </span>
+      {% endif %}
+      
+      {% if r.price %}
+        <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 text-sm rounded-full">
+          <i data-lucide="dollar-sign" class="w-3 h-3"></i>
+          {{ r.price }}
+        </span>
+      {% endif %}
+    </div>
+    
+    {% if r.website %}
+      <a href="{{ r.website }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors">
+        <i data-lucide="external-link" class="w-4 h-4"></i>
+        Visit Website
+      </a>
+    {% endif %}
   </div>
+
+  <div class="border-t border-gray-100 pt-4">
+    <div id="pin-btn-{{ r.id }}"
+         hx-get="{% url 'places:toggle_pin' r.pk %}" 
+         hx-target="this" 
+         hx-swap="outerHTML">
+      {% include "places/_pin_button.html" with r=r pinned=pinned %}
+    </div>
+  </div>
+</div>
 {% endblock %}
