@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-1">Write a Review</h1>
+<p class="text-gray-600 mb-4">Pick a restaurant and rate it. Sub-ratings are optional.</p>
+
+<form method="post" class="space-y-3 bg-white rounded-xl p-4 shadow">
+  {% csrf_token %}
+
+  <div>
+    <label class="block text-sm font-medium">Restaurant</label>
+    {{ form.restaurant }}
+  </div>
+
+  <div>
+    <label class="block text-sm font-medium">Overall rating (1–5)</label>
+    {{ form.overall_rating }}
+  </div>
+
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <label class="block text-sm text-gray-700">Food (optional)</label>
+      {{ form.food }}
+    </div>
+    <div>
+      <label class="block text-sm text-gray-700">Service (optional)</label>
+      {{ form.service }}
+    </div>
+    <div>
+      <label class="block text-sm text-gray-700">Value (optional)</label>
+      {{ form.value }}
+    </div>
+    <div>
+      <label class="block text-sm text-gray-700">Atmosphere (optional)</label>
+      {{ form.atmosphere }}
+    </div>
+  </div>
+
+  <div>
+    <label class="block text-sm font-medium">Your review (optional)</label>
+    {{ form.text }}
+  </div>
+
+  <button class="px-4 py-2 rounded-xl bg-gray-900 text-white">Post review</button>
+</form>
+
+<h2 class="text-lg font-semibold mt-6 mb-2">My recent reviews</h2>
+<ul class="space-y-2">
+  {% for rv in my_reviews %}
+    <li class="bg-white rounded-xl p-4 shadow">
+      <div class="text-sm text-gray-500">{{ rv.created_at|date:"M j, H:i" }}</div>
+      <div class="font-semibold">{{ rv.restaurant.name }} — {{ rv.overall_rating }}★</div>
+      <div class="mt-1 text-xs text-gray-600 flex flex-wrap gap-2">
+        {% if rv.food %}<span class="px-2 py-0.5 rounded bg-gray-100">Food {{ rv.food }}★</span>{% endif %}
+        {% if rv.service %}<span class="px-2 py-0.5 rounded bg-gray-100">Service {{ rv.service }}★</span>{% endif %}
+        {% if rv.value %}<span class="px-2 py-0.5 rounded bg-gray-100">Value {{ rv.value }}★</span>{% endif %}
+        {% if rv.atmosphere %}<span class="px-2 py-0.5 rounded bg-gray-100">Atmosphere {{ rv.atmosphere }}★</span>{% endif %}
+      </div>
+      {% if rv.text %}<p class="text-gray-700 mt-1">{{ rv.text }}</p>{% endif %}
+    </li>
+  {% empty %}
+    <li class="text-gray-600">No reviews yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}
