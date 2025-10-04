@@ -53,3 +53,15 @@ class Comment(models.Model):
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="comments")
     text = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
+    display_name = models.CharField(max_length=80, blank=True)
+    bio = models.TextField(blank=True)
+    location = models.CharField(max_length=80, blank=True)
+    website = models.URLField(blank=True)
+    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+
+    def __str__(self):
+        return f"Profile({self.user.username})"

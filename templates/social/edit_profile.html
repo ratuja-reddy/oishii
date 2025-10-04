@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1 class="text-2xl font-bold mb-4">Edit Profile</h1>
+
+<form method="post" enctype="multipart/form-data" class="space-y-6">
+  {% csrf_token %}
+
+  <section class="bg-white rounded-2xl shadow p-4 space-y-3">
+    <h2 class="font-semibold">Account</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="text-sm text-gray-600">First name</label>
+        {{ uform.first_name }}
+      </div>
+      <div>
+        <label class="text-sm text-gray-600">Last name</label>
+        {{ uform.last_name }}
+      </div>
+    </div>
+    <div>
+      <label class="text-sm text-gray-600">Email</label>
+      {{ uform.email }}
+    </div>
+  </section>
+
+  <section class="bg-white rounded-2xl shadow p-4 space-y-3">
+    <h2 class="font-semibold">Profile</h2>
+    <div>
+      <label class="text-sm text-gray-600">Display name</label>
+      {{ pform.display_name }}
+    </div>
+    <div>
+      <label class="text-sm text-gray-600">Bio</label>
+      {{ pform.bio }}
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="text-sm text-gray-600">Location</label>
+        {{ pform.location }}
+      </div>
+      <div>
+        <label class="text-sm text-gray-600">Website</label>
+        {{ pform.website }}
+      </div>
+    </div>
+    <div>
+      <label class="text-sm text-gray-600 block mb-1">Avatar</label>
+      {{ pform.avatar }}
+    </div>
+  </section>
+
+  <button class="px-4 py-2 rounded-xl bg-gray-900 text-white">Save changes</button>
+  <a href="{% url 'profile_me' %}" class="ml-2 text-gray-600 underline">Cancel</a>
+</form>
+
+{% endblock %}
