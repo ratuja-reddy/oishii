@@ -1,84 +1,98 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1 class="text-2xl font-bold mb-2">Home Feed</h1>
+<h1 class="text-2xl font-bold mb-1">Home Feed</h1>
 <p class="text-gray-600 mb-4">See what you and your friends are reviewing.</p>
 
-<div class="space-y-4">
+<div class="space-y-5">
   {% for a in activities %}
     <!-- Activity card -->
-    <article class="bg-white rounded-2xl shadow p-4">
-      
-      <!-- Header with avatar + username + timestamp -->
-      <div class="flex items-center gap-3 mb-2">
+    <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition">
+      <!-- Header: avatar + name + time -->
+      <header class="flex items-center gap-3 mb-3">
         {% if a.user.profile and a.user.profile.avatar %}
           <img src="{{ a.user.profile.avatar.url }}"
                alt="{{ a.user.username }} avatar"
-               class="w-8 h-8 rounded-full object-cover ring-1 ring-black/5">
+               class="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-400/70">
         {% else %}
-          <div class="w-8 h-8 rounded-full bg-gray-200 ring-1 ring-black/5"></div>
+          <div class="w-10 h-10 rounded-full bg-gray-200 ring-2 ring-indigo-200"></div>
         {% endif %}
-
         <div class="flex-1 leading-tight">
-          <div class="text-sm font-medium">@{{ a.user.username }}</div>
+          <div class="font-semibold text-gray-900">@{{ a.user.username }}</div>
           <div class="text-xs text-gray-500">{{ a.created_at|date:"M j, H:i" }}</div>
         </div>
+      </header>
+
+      <!-- Title row: restaurant + overall stars -->
+      <div class="flex items-center gap-2">
+        <h2 class="text-lg font-bold text-gray-900">
+          <a class="hover:underline" href="{% url 'places:restaurant_detail' a.restaurant.id %}">
+            {{ a.restaurant.name }}
+          </a>
+        </h2>
+        {% include "components/stars.html" with rating=a.review.overall_rating size="md" %}
       </div>
 
-      <!-- Review info -->
-      <h2 class="mt-1 text-lg font-semibold">
-        <a class="hover:underline" href="{% url 'places:restaurant_detail' a.restaurant.id %}">
-          {{ a.restaurant.name }}
-        </a>
-        — {{ a.review.overall_rating }}★
-      </h2>
-
+      <!-- Review text -->
       {% if a.review.text %}
-        <p class="mt-2 text-gray-800">{{ a.review.text }}</p>
+        <p class="mt-2 text-gray-800 leading-snug">{{ a.review.text }}</p>
       {% endif %}
 
+      <!-- Sub-ratings as soft badges -->
       {% if a.review.food or a.review.service or a.review.value or a.review.atmosphere %}
-        <div class="mt-3 text-xs text-gray-600 flex flex-wrap gap-2">
+        <div class="mt-3 flex flex-wrap gap-2 text-xs">
           {% if a.review.food %}
-            <span class="px-2 py-0.5 rounded bg-gray-100">Food {{ a.review.food }}★</span>
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+              <span>Food</span>
+              {% include "components/stars.html" with rating=a.review.food size="sm" %}
+            </span>
           {% endif %}
           {% if a.review.service %}
-            <span class="px-2 py-0.5 rounded bg-gray-100">Service {{ a.review.service }}★</span>
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+              <span>Service</span>
+              {% include "components/stars.html" with rating=a.review.service size="sm" %}
+            </span>
           {% endif %}
           {% if a.review.value %}
-            <span class="px-2 py-0.5 rounded bg-gray-100">Value {{ a.review.value }}★</span>
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+              <span>Value</span>
+              {% include "components/stars.html" with rating=a.review.value size="sm" %}
+            </span>
           {% endif %}
           {% if a.review.atmosphere %}
-            <span class="px-2 py-0.5 rounded bg-gray-100">Atmosphere {{ a.review.atmosphere }}★</span>
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+              <span>Atmosphere</span>
+              {% include "components/stars.html" with rating=a.review.atmosphere size="sm" %}
+            </span>
           {% endif %}
         </div>
       {% endif %}
 
       <!-- Actions -->
-      <div class="mt-4 flex items-center gap-4">
-        <!-- Like button (HTMX swaps this node) -->
+      <footer class="mt-4 flex items-center gap-4">
+        <!-- Like button partial (is a <form> with CSRF inside) -->
         <div id="like-{{ a.id }}">
           {% include "social/_like_button.html" with a=a %}
         </div>
 
-        <a class="text-sm text-blue-600 underline"
+        <a class="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
            href="{% url 'places:restaurant_detail' a.restaurant.id %}">
           See restaurant
         </a>
-      </div>
+      </footer>
     </article>
   {% empty %}
     <!-- Empty state -->
     <div class="text-center py-16">
-      <div class="text-gray-800 font-semibold text-lg">Your feed is empty</div>
+      <div class="text-gray-900 font-semibold text-lg">Your feed is empty</div>
       <p class="text-gray-600 mt-1">Follow some friends or post a review to get started.</p>
       <div class="mt-4 flex items-center justify-center gap-3">
         <a href="{% url 'discover' %}"
-           class="px-4 py-2 rounded-xl border border-gray-300 text-gray-800 bg-white">
+           class="px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-800 hover:bg-gray-50">
           Discover places
         </a>
         <a href="{% url 'review_tab' %}"
-           class="px-4 py-2 rounded-xl bg-indigo-600 text-white">
+           class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white">
           Write a review
         </a>
       </div>
