@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import ReviewForm
@@ -142,3 +143,55 @@ def review_create_for_restaurant(request, pk):
         "places/review_form.html",
         {"form": form, "restaurant": restaurant, "active_tab": "review"},
     )
+
+# -------------------
+# LISTS
+# -------------------
+
+@login_required
+def list_picker(request, pk):
+    """Return a small modal with the user's lists and add/remove toggles for this restaurant."""
+    r = get_object_or_404(Restaurant, pk=pk)
+    lists = List.objects.filter(owner=request.user).order_by("title").prefetch_related("pins")
+    # which lists already contain this restaurant
+    present = set(Pin.objects.filter(list__in=lists, restaurant=r).values_list("list_id", flat=True))
+    return render(request, "places/_list_picker.html", {"r": r, "lists": lists, "present": present})
+
+@login_required
+def toggle_in_list(request, pk, list_id):
+    """Add/remove restaurant pk to/from list_id; returns updated row to swap in the modal."""
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST only")
+    r = get_object_or_404(Restaurant, pk=pk)
+    lst = get_object_or_404(List, pk=list_id, owner=request.user)
+    pin, created = Pin.objects.get_or_create(user=request.user, list=lst, restaurant=r)
+    if not created:
+        pin.delete()
+        is_in = False
+    else:
+        is_in = True
+    # return a small line item snippet for that list
+    return render(request, "places/_list_picker_row.html", {"lst": lst, "r": r, "is_in": is_in})
+
+@login_required
+def create_list(request):
+    """Create a new list from the modal and re-render the whole list picker."""
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST only")
+    title = (request.POST.get("title") or "").strip()
+    if not title:
+        return HttpResponseBadRequest("Title required")
+    lst, _ = List.objects.get_or_create(owner=request.user, title=title, defaults={"is_public": False})
+    # re-render modal for the same restaurant (passed as hidden field)
+    pk = request.POST.get("restaurant_id")
+    r = get_object_or_404(Restaurant, pk=pk)
+    lists = List.objects.filter(owner=request.user).order_by("title")
+    present = set(Pin.objects.filter(list__in=lists, restaurant=r).values_list("list_id", flat=True))
+    return render(request, "places/_list_picker.html", {"r": r, "lists": lists, "present": present})
+
+@login_required
+def list_detail(request, list_id):
+    lst = get_object_or_404(List, pk=list_id, owner=request.user)
+    items = (Pin.objects.select_related("restaurant")
+             .filter(list=lst).order_by("-created_at"))
+    return render(request, "places/list_detail.html", {"lst": lst, "items": items})

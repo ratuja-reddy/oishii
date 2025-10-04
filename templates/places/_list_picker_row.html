@@ -1,0 +1,14 @@
+<div class="py-2 flex items-center justify-between">
+  <div class="font-medium">{{ lst.title }}</div>
+  <form
+    hx-post="{% url 'toggle_in_list' r.id lst.id %}"
+    hx-target="#row-{{ lst.id }}"
+    hx-swap="outerHTML">
+    {% csrf_token %}
+    {% if is_in %}
+      <button class="px-2 py-1 text-sm rounded border border-gray-300 bg-white">Remove</button>
+    {% else %}
+      <button class="px-2 py-1 text-sm rounded bg-indigo-600 text-white">Add</button>
+    {% endif %}
+  </form>
+</div>
