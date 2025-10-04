@@ -8,11 +8,24 @@
   {% for a in activities %}
     <!-- Activity card -->
     <article class="bg-white rounded-2xl shadow p-4">
-      <div class="flex items-center justify-between text-sm text-gray-500">
-        <div>@{{ a.user.username }}</div>
-        <div>{{ a.created_at|date:"M j, H:i" }}</div>
+      
+      <!-- Header with avatar + username + timestamp -->
+      <div class="flex items-center gap-3 mb-2">
+        {% if a.user.profile and a.user.profile.avatar %}
+          <img src="{{ a.user.profile.avatar.url }}"
+               alt="{{ a.user.username }} avatar"
+               class="w-8 h-8 rounded-full object-cover ring-1 ring-black/5">
+        {% else %}
+          <div class="w-8 h-8 rounded-full bg-gray-200 ring-1 ring-black/5"></div>
+        {% endif %}
+
+        <div class="flex-1 leading-tight">
+          <div class="text-sm font-medium">@{{ a.user.username }}</div>
+          <div class="text-xs text-gray-500">{{ a.created_at|date:"M j, H:i" }}</div>
+        </div>
       </div>
 
+      <!-- Review info -->
       <h2 class="mt-1 text-lg font-semibold">
         <a class="hover:underline" href="{% url 'places:restaurant_detail' a.restaurant.id %}">
           {{ a.restaurant.name }}
@@ -26,20 +39,26 @@
 
       {% if a.review.food or a.review.service or a.review.value or a.review.atmosphere %}
         <div class="mt-3 text-xs text-gray-600 flex flex-wrap gap-2">
-          {% if a.review.food %}<span class="px-2 py-0.5 rounded bg-gray-100">Food {{ a.review.food }}★</span>{% endif %}
-          {% if a.review.service %}<span class="px-2 py-0.5 rounded bg-gray-100">Service {{ a.review.service }}★</span>{% endif %}
-          {% if a.review.value %}<span class="px-2 py-0.5 rounded bg-gray-100">Value {{ a.review.value }}★</span>{% endif %}
-          {% if a.review.atmosphere %}<span class="px-2 py-0.5 rounded bg-gray-100">Atmosphere {{ a.review.atmosphere }}★</span>{% endif %}
+          {% if a.review.food %}
+            <span class="px-2 py-0.5 rounded bg-gray-100">Food {{ a.review.food }}★</span>
+          {% endif %}
+          {% if a.review.service %}
+            <span class="px-2 py-0.5 rounded bg-gray-100">Service {{ a.review.service }}★</span>
+          {% endif %}
+          {% if a.review.value %}
+            <span class="px-2 py-0.5 rounded bg-gray-100">Value {{ a.review.value }}★</span>
+          {% endif %}
+          {% if a.review.atmosphere %}
+            <span class="px-2 py-0.5 rounded bg-gray-100">Atmosphere {{ a.review.atmosphere }}★</span>
+          {% endif %}
         </div>
       {% endif %}
 
+      <!-- Actions -->
       <div class="mt-4 flex items-center gap-4">
         <!-- Like button (HTMX swaps this node) -->
-        <div id="like-{{ a.id }}"
-             hx-post="{% url 'toggle_like' a.id %}"
-             hx-target="#like-{{ a.id }}"
-             hx-swap="outerHTML">
-          {% include "social/_like_button.html" with a=a me=request.user %}
+        <div id="like-{{ a.id }}">
+          {% include "social/_like_button.html" with a=a %}
         </div>
 
         <a class="text-sm text-blue-600 underline"

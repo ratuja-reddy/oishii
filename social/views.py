@@ -1,9 +1,12 @@
+from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_http_methods
 
-from .models import Activity, Follow, Like
+from .forms import ProfileForm, UserEditForm
+from .models import Activity, Follow, Like, Profile
 
 # ---------- Auth / Profile ----------
 
@@ -59,12 +62,11 @@ def feed(request):
 
     activities = (
         Activity.objects
-        .select_related("user", "restaurant", "review")
+        .select_related("user", "user__profile", "restaurant", "review")  # 👈 pull profile too
         .filter(user_id__in=audience, type="review")
         .order_by("-created_at")[:50]
     )
 
-    # Mark which of these the current user liked (one query)
     liked_ids = set(
         Like.objects.filter(user=request.user, activity__in=activities)
         .values_list("activity_id", flat=True)
@@ -99,3 +101,24 @@ def toggle_like(request, pk):
     activity.liked_by_me = liked_by_me
 
     return render(request, "social/_like_button.html", {"a": activity})
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def edit_profile(request):
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+
+    if request.method == "POST":
+        uform = UserEditForm(request.POST, instance=request.user)
+        pform = ProfileForm(request.POST, request.FILES, instance=profile)
+        if uform.is_valid() and pform.is_valid():
+            uform.save()
+            pform.save()
+            messages.success(request, "Profile updated!")
+            return redirect("profile_me")
+    else:
+        uform = UserEditForm(instance=request.user)
+        pform = ProfileForm(instance=profile)
+
+    return render(request, "social/edit_profile.html",
+                  {"uform": uform, "pform": pform, "active_tab": "profile"})
