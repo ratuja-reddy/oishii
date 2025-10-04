@@ -1,20 +1,87 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="text-2xl font-bold">My Restaurants</h1>
-<p class="text-gray-600 mb-4">Your lists</p>
 
+<!-- Header -->
+<div class="mb-4">
+  <h1 class="text-2xl font-bold">My Restaurants</h1>
+  <p class="text-gray-500">Your lists</p>
+</div>
+
+<!-- Default lists -->
+<section class="space-y-3 mb-8">
+  {% if visited or saved %}
+    {% if visited %}
+      <a href="{% url 'list_detail' visited.id %}"
+         class="block bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm transition">
+        <div class="flex items-center justify-between">
+          <div class="font-medium text-gray-900">Visited</div>
+          <div class="text-xs text-gray-500">{{ visited.is_public|yesno:"Public,Private" }}</div>
+        </div>
+        <div class="text-sm text-gray-500 mt-1">{{ visited.pins.count }} places</div>
+      </a>
+    {% endif %}
+
+    {% if saved %}
+      <a href="{% url 'list_detail' saved.id %}"
+         class="block bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm transition">
+        <div class="flex items-center justify-between">
+          <div class="font-medium text-gray-900">Saved</div>
+          <div class="text-xs text-gray-500">{{ saved.is_public|yesno:"Public,Private" }}</div>
+        </div>
+        <div class="text-sm text-gray-500 mt-1">{{ saved.pins.count }} places</div>
+      </a>
+    {% endif %}
+  {% else %}
+    <div class="bg-white rounded-lg border border-gray-200 p-5 text-gray-600">
+      You don’t have your default lists yet.
+      <button
+        class="ml-2 underline text-indigo-600"
+        hx-get="{% url 'create_list' %}"
+        hx-target="#modal"
+        hx-swap="innerHTML">
+        Create one
+      </button>
+    </div>
+  {% endif %}
+</section>
+
+<hr class="border-gray-200 mb-6">
+
+<!-- Custom lists header with Add list button -->
+<div class="flex items-center justify-between mb-2">
+  <h2 class="text-sm font-semibold text-gray-700">Custom lists</h2>
+  <button
+    class="px-3 py-2 rounded-md border border-gray-300 text-indigo-600 text-sm font-medium hover:bg-gray-50"
+    hx-get="{% url 'create_list' %}"
+    hx-target="#modal"
+    hx-swap="innerHTML">
+    Add list
+  </button>
+</div>
+
+<!-- Custom lists -->
 <section class="space-y-3">
-  {% for lst in lists %}
+  {% for lst in custom_lists %}
     <a href="{% url 'list_detail' lst.id %}"
-       class="block bg-white rounded-2xl shadow p-4 hover:shadow-md transition border border-gray-100">
+       class="block bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm transition">
       <div class="flex items-center justify-between">
-        <div class="font-semibold">{{ lst.title }}</div>
+        <div class="font-medium text-gray-900">{{ lst.title }}</div>
         <div class="text-xs text-gray-500">{{ lst.is_public|yesno:"Public,Private" }}</div>
       </div>
       <div class="text-sm text-gray-500 mt-1">{{ lst.pins.count }} places</div>
     </a>
   {% empty %}
-    <div class="text-gray-600">No lists yet.</div>
+    <div class="bg-white rounded-lg border border-gray-200 p-5 text-gray-600 flex items-center justify-between">
+      <span>No custom lists yet.</span>
+      <button
+        class="px-3 py-2 rounded-md border border-gray-300 text-indigo-600 text-sm font-medium hover:bg-gray-50"
+        hx-get="{% url 'create_list' %}"
+        hx-target="#modal"
+        hx-swap="innerHTML">
+        Add list
+      </button>
+    </div>
   {% endfor %}
 </section>
+
 {% endblock %}

@@ -1,7 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from .forms import ReviewForm
 from .models import List, Pin, Restaurant, Review
@@ -52,20 +53,30 @@ def toggle_pin(request, pk):
 
 @login_required
 def my_restaurants(request):
-    lists = (
+    all_lists = list(
         List.objects.filter(owner=request.user)
-        .order_by("title")
         .prefetch_related("pins__restaurant")
+        .order_by("title")
     )
-    pins = (
-        Pin.objects.select_related("restaurant")
-        .filter(user=request.user)
-        .order_by("-created_at")[:100]
-    )
+
+    def norm(s: str) -> str:
+        return (s or "").strip().lower()
+
+    visited = next((lst for lst in all_lists if norm(lst.title) == "visited"), None)
+    # Treat either “Saved” or your earlier “Want to go” as the default saved list
+    saved = next((lst for lst in all_lists if norm(lst.title) in {"saved", "want to go"}), None)
+
+    custom_lists = [lst for lst in all_lists if lst not in {visited, saved}]
+
     return render(
         request,
         "places/my_restaurants.html",
-        {"lists": lists, "pins": pins, "active_tab": "my"},
+        {
+            "visited": visited,
+            "saved": saved,
+            "custom_lists": custom_lists,
+            "active_tab": "my",
+        },
     )
 
 
@@ -175,20 +186,38 @@ def toggle_in_list(request, pk, list_id):
 
 @login_required
 def create_list(request):
-    """Create a new list from the modal and re-render the whole list picker."""
-    if request.method != "POST":
-        return HttpResponseBadRequest("POST only")
-    title = (request.POST.get("title") or "").strip()
-    if not title:
-        return HttpResponseBadRequest("Title required")
-    lst, _ = List.objects.get_or_create(owner=request.user, title=title, defaults={"is_public": False})
-    # re-render modal for the same restaurant (passed as hidden field)
-    pk = request.POST.get("restaurant_id")
-    r = get_object_or_404(Restaurant, pk=pk)
-    lists = List.objects.filter(owner=request.user).order_by("title")
-    present = set(Pin.objects.filter(list__in=lists, restaurant=r).values_list("list_id", flat=True))
-    return render(request, "places/_list_picker.html", {"r": r, "lists": lists, "present": present})
+    """
+    GET -> render small modal with form
+    POST -> create list for current user and HTMX-redirect to list detail
+    """
+    if request.method == "POST":
+        title = (request.POST.get("title") or "").strip()
+        is_public = (request.POST.get("is_public") == "on")
 
+        errors = {}
+        if not title:
+            errors["title"] = "Please enter a name."
+
+        # enforce uniqueness per user from your model Meta(unique_together)
+        if not errors and List.objects.filter(owner=request.user, title=title).exists():
+            errors["title"] = "You already have a list with this name."
+
+        if errors:
+            return render(request, "places/_list_create_modal.html", {
+                "errors": errors,
+                "title_value": title,
+                "is_public_value": is_public,
+            })
+
+        lst = List.objects.create(owner=request.user, title=title, is_public=is_public)
+
+        # HTMX redirect so the page changes without reloading everything
+        resp = HttpResponse("")
+        resp["HX-Redirect"] = reverse("list_detail", args=[lst.id])
+        return resp
+
+    # GET -> show modal
+    return render(request, "places/_list_create_modal.html")
 @login_required
 def list_detail(request, list_id):
     lst = get_object_or_404(List, pk=list_id, owner=request.user)
