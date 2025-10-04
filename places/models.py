@@ -64,7 +64,6 @@ class List(models.Model):
     def __str__(self):
         return f"{self.owner} – {self.title}"
 
-
 class Pin(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="pins"
@@ -76,14 +75,15 @@ class Pin(models.Model):
         List, null=True, blank=True, on_delete=models.SET_NULL, related_name="pins"
     )
     note = models.TextField(blank=True)
-    rating = models.PositiveSmallIntegerField(null=True, blank=True)  # 1–5 stars
+    rating = models.PositiveSmallIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("user", "restaurant")
+        # ✨ allow same restaurant across lists; one entry per list+restaurant
+        unique_together = ("list", "restaurant")
 
     def __str__(self):
-        return f"{self.user} → {self.restaurant}"
+        return f"{self.user} → {self.restaurant} ({self.list and self.list.title or 'no-list'})"
 
 class Review(models.Model):
     RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]  # 1–5

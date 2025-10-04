@@ -15,6 +15,10 @@ urlpatterns = [
     path("my/", pviews.my_restaurants, name="my_restaurants"),
     path("discover/", pviews.discover, name="discover"),
     path("review/", pviews.review_tab, name="review_tab"),
+    path("r/<int:pk>/lists/", pviews.list_picker, name="list_picker"),
+    path("r/<int:pk>/lists/<int:list_id>/toggle/", pviews.toggle_in_list, name="toggle_in_list"),
+    path("lists/create/", pviews.create_list, name="create_list"),
+    path("lists/<int:list_id>/", pviews.list_detail, name="list_detail"),
     # social views
     path("me/", sviews.profile_me, name="profile_me"),
     path("friends/", sviews.friends, name="friends"),

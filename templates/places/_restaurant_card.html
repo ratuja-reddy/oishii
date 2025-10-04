@@ -1,5 +1,6 @@
 <div class="bg-white rounded-2xl shadow hover:shadow-lg transition-all">
   <div class="p-4 flex flex-col gap-2">
+    <!-- Restaurant link -->
     <a href="{% url 'places:restaurant_detail' r.pk %}" class="block">
       <h2 class="text-lg font-semibold text-gray-900">{{ r.name }}</h2>
       <p class="text-sm text-gray-500 truncate">
@@ -8,10 +9,15 @@
       </p>
     </a>
 
-    <div id="pin-btn-{{ r.id }}"
-         hx-get="{% url 'places:toggle_pin' r.pk %}"
-         hx-target="this" hx-swap="outerHTML">
-      {% include "places/_pin_button.html" with r=r pinned=pinned %}
+    <!-- Add to list button (opens modal) -->
+    <div>
+      <button
+        class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-sm hover:bg-indigo-700 transition"
+        hx-get="{% url 'list_picker' r.id %}"
+        hx-target="#modal"
+        hx-swap="innerHTML">
+        Add to list
+      </button>
     </div>
   </div>
 </div>

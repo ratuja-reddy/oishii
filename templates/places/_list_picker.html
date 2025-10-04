@@ -1,0 +1,35 @@
+<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-4">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-lg font-semibold">Add to list</h3>
+        <button class="text-gray-500" onclick="document.getElementById('modal').innerHTML=''">✕</button>
+      </div>
+  
+      <p class="text-sm text-gray-600 mb-3">{{ r.name }}</p>
+  
+      <ul class="divide-y divide-gray-100">
+        {% for lst in lists %}
+          <li id="row-{{ lst.id }}">
+            {% if lst.id in present %}
+              {% include "places/_list_picker_row.html" with lst=lst r=r is_in=True %}
+            {% else %}
+              {% include "places/_list_picker_row.html" with lst=lst r=r is_in=False %}
+            {% endif %}
+          </li>
+        {% empty %}
+          <li class="py-3 text-gray-500 text-sm">No lists yet.</li>
+        {% endfor %}
+      </ul>
+  
+      <form class="mt-4 flex gap-2"
+            hx-post="{% url 'create_list' %}"
+            hx-target="#modal"
+            hx-swap="innerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="restaurant_id" value="{{ r.id }}">
+        <input name="title" placeholder="New list name…" class="flex-1 border rounded-xl px-3 py-2">
+        <button class="px-3 py-2 rounded-xl bg-gray-900 text-white">Create</button>
+      </form>
+    </div>
+  </div>
+  
