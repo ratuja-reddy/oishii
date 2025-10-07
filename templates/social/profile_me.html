@@ -1,44 +1,59 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- Header -->
-<div class="flex items-start gap-4 mb-6">
-  {% if me.profile and me.profile.avatar %}
-    <img src="{{ me.profile.avatar.url }}" alt="{{ me.username }} avatar"
-         class="w-20 h-20 rounded-full object-cover ring-2 ring-white shadow">
-  {% else %}
-    <div class="w-20 h-20 rounded-full bg-gray-200 ring-2 ring-white shadow"></div>
-  {% endif %}
-
-  <div class="flex-1">
-    <h1 class="text-2xl font-bold leading-tight">
-      {{ me.profile.display_name|default:me.username }}
-      <span class="block text-sm text-gray-500">@{{ me.username }}</span>
-    </h1>
-
-    <p class="mt-1 text-gray-600">
-      {% if me.profile and me.profile.location %}
-        {{ me.profile.location }}
+<!-- Profile header -->
+<header class="mb-6">
+  <div class="flex items-start justify-between gap-4">
+    <!-- Left: avatar + meta -->
+    <div class="flex items-start gap-4">
+      {% if me.profile and me.profile.avatar %}
+        <img src="{{ me.profile.avatar.url }}" alt="{{ me.username }} avatar"
+             class="w-20 h-20 rounded-full object-cover ring-2 ring-white shadow">
+      {% else %}
+        <div class="w-20 h-20 rounded-full bg-gray-200 ring-2 ring-white shadow"></div>
       {% endif %}
-      {% if me.profile and me.profile.website %}
-        {% if me.profile.location %} • {% endif %}
-        <a href="{{ me.profile.website }}" target="_blank" rel="noopener"
-           class="text-indigo-600 hover:text-indigo-700 underline">Website</a>
-      {% endif %}
-    </p>
 
-    <div class="mt-3 flex gap-2">
-      <a href="{% url 'edit_profile' %}"
-         class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white hover:bg-gray-50">
-        Edit profile
-      </a>
-      <a href="{% url 'friends' %}"
-         class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white text-gray-700 hover:bg-gray-50">
-        Friends
-      </a>
+      <div>
+        <h1 class="text-2xl font-bold leading-tight">
+          {{ me.profile.display_name|default:me.username }}
+          <span class="block text-sm text-gray-500">@{{ me.username }}</span>
+        </h1>
+
+        <p class="mt-1 text-gray-600">
+          {% if me.profile and me.profile.location %}
+            {{ me.profile.location }}
+          {% endif %}
+          {% if me.profile and me.profile.website %}
+            {% if me.profile.location %} • {% endif %}
+            <a href="{{ me.profile.website }}" target="_blank" rel="noopener"
+               class="text-indigo-600 hover:text-indigo-700 underline">Website</a>
+          {% endif %}
+        </p>
+
+        <div class="mt-3 flex flex-wrap gap-2">
+          <a href="{% url 'edit_profile' %}"
+             class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white hover:bg-gray-50">
+            Edit profile
+          </a>
+          <a href="{% url 'friends' %}"
+             class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white text-gray-700 hover:bg-gray-50">
+            Friends
+          </a>
+        </div>
+      </div>
     </div>
+
+    <!-- Right: logout (only on profile page) -->
+    {% if user.is_authenticated and user.id == me.id %}
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button class="px-4 py-1.5 rounded-full border border-gray-200 text-sm text-gray-700 bg-white shadow-sm hover:bg-gray-50">
+          Log out
+        </button>
+      </form>
+    {% endif %}
   </div>
-</div>
+</header>
 
 <!-- Bio -->
 {% if me.profile and me.profile.bio %}

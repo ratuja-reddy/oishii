@@ -57,12 +57,15 @@ class List(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=120)
     is_public = models.BooleanField(default=True)
+    position = models.PositiveIntegerField(default=0, db_index=True)  # safe default
 
     class Meta:
+        ordering = ("position", "id")
         unique_together = ("owner", "title")
 
     def __str__(self):
         return f"{self.owner} – {self.title}"
+
 
 class Pin(models.Model):
     user = models.ForeignKey(
