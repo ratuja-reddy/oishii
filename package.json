@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev:css": "tailwindcss -i ./static/src/input.css -o ./static/css/app.css --watch",
-    "build:css": "tailwindcss -i ./static/src/input.css -o ./static/css/app.css --minify"
+    "build:css": "tailwindcss -i ./static/src/input.css -o ./static/css/app.css --minify",
+    "dev": "npm run dev:css",
+    "build": "npm run build:css"
   },
   "repository": {
     "type": "git",
