@@ -7,8 +7,11 @@ from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
+from places.models import Review, List, Pin
+
 from .forms import ProfileForm, UserEditForm
 from .models import Activity, Follow, Like, Profile
+from django.db.models import Count, Prefetch
 
 # ---------- Auth / Profile ----------
 
@@ -88,6 +91,67 @@ def friends(request):
     return render(request, "social/friends.html", context)
 
 
+@login_required
+def profile_public(request, username: str):
+    person = get_object_or_404(
+        User.objects.select_related("profile"),
+        username=username,
+    )
+
+    if person.id == request.user.id:
+        return redirect("profile_me")
+
+    # Are *you* following this person?
+    is_following = Follow.objects.filter(follower=request.user, followee=person).exists()
+
+    # Counts
+    restaurants_count = (
+        Review.objects.filter(user=person).values("restaurant").distinct().count()
+    )
+    following_count = Follow.objects.filter(follower=person).count()
+    followers_count = Follow.objects.filter(followee=person).count()
+
+    # Recent reviews
+    recent_reviews = (
+        Review.objects
+        .select_related("restaurant", "user")
+        .filter(user=person)
+        .order_by("-created_at")[:10]
+    )
+
+    # ---- Lists (only show all lists if you follow; otherwise only public lists) ----
+    base_qs = List.objects.filter(owner=person)
+    if not is_following:
+        base_qs = base_qs.filter(is_public=True)
+
+    lists = (
+        base_qs
+        .annotate(places_count=Count("pins", distinct=True))   # number of items in the list
+        .prefetch_related(
+            # fetch up to N pins with restaurants for a tiny preview row
+            Prefetch(
+                "pins",
+                queryset=Pin.objects
+                    .select_related("restaurant")
+                    .order_by("-created_at"),
+            )
+        )
+        .order_by("position", "id")[:6]
+    )
+
+    return render(
+        request,
+        "social/profile_public.html",
+        {
+            "person": person,
+            "is_following": is_following,
+            "restaurants_count": restaurants_count,
+            "following_count": following_count,
+            "followers_count": followers_count,
+            "recent_reviews": recent_reviews,
+            "lists": lists,  # <- NEW
+        },
+    )
 # ---------- Feed ----------
 
 @login_required

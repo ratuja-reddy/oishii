@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}{{ person.username }} · Profile{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+
+  <!-- Header -->
+  <div class="flex items-start gap-4 mb-6">
+    {% if person.profile and person.profile.avatar %}
+      <img src="{{ person.profile.avatar.url }}"
+           alt="{{ person.username }} avatar"
+           class="h-20 w-20 rounded-full object-cover ring-1 ring-gray-200 shadow-sm">
+    {% else %}
+      <div class="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center text-xl text-gray-600">
+        {{ person.username|first|upper }}
+      </div>
+    {% endif %}
+
+    <div class="flex-1 min-w-0">
+      <div class="text-2xl font-semibold truncate">
+        {% if person.profile and person.profile.display_name %}
+          {{ person.profile.display_name }}
+        {% elif person.first_name or person.last_name %}
+          {{ person.first_name }}{% if person.last_name %} {{ person.last_name }}{% endif %}
+        {% else %}
+          @{{ person.username }}
+        {% endif %}
+      </div>
+      <div class="text-sm text-gray-500 truncate">
+        @{{ person.username }}
+        {% if person.profile and person.profile.location %}
+          • {{ person.profile.location }}
+        {% endif %}
+      </div>
+
+      {% if person.profile and person.profile.bio %}
+        <p class="mt-2 text-gray-800">{{ person.profile.bio }}</p>
+      {% endif %}
+    </div>
+
+    {% if request.user.id != person.id %}
+      <form id="follow-{{ person.id }}"
+            hx-post="{% url 'toggle_follow' person.id %}"
+            hx-target="#follow-{{ person.id }}"
+            hx-swap="outerHTML">
+        {% csrf_token %}
+        {% if is_following %}
+          <button type="submit"
+                  class="px-3 py-1 rounded-full text-sm border text-red-700 border-red-300 hover:bg-red-50">
+            Unfollow
+          </button>
+        {% else %}
+          <button type="submit"
+                  class="px-3 py-1 rounded-full text-sm border text-gray-700 border-gray-300">
+            + Follow
+          </button>
+        {% endif %}
+      </form>
+    {% endif %}
+  </div>
+
+  <!-- Optional: Friends / Following buttons (Goodreads-style) -->
+  <div class="flex items-center gap-2 mb-4">
+    <a href="{% url 'friends' %}"
+       class="px-3 py-1.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50">
+      Friends
+    </a>
+    <a href="{% url 'profile_public' person.username %}"
+       class="px-3 py-1.5 rounded-xl border border-indigo-600 text-white bg-indigo-600">
+      Following
+    </a>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-3 gap-3 mb-6">
+    <div class="bg-white rounded-2xl shadow p-4 text-center">
+      <div class="text-2xl font-semibold">{{ restaurants_count }}</div>
+      <div class="text-xs text-gray-500">restaurants</div>
+    </div>
+    <div class="bg-white rounded-2xl shadow p-4 text-center">
+      <div class="text-2xl font-semibold">{{ following_count }}</div>
+      <div class="text-xs text-gray-500">following</div>
+    </div>
+    <div class="bg-white rounded-2xl shadow p-4 text-center">
+      <div class="text-2xl font-semibold">{{ followers_count }}</div>
+      <div class="text-xs text-gray-500">followers</div>
+    </div>
+  </div>
+
+  <!-- Lists (all if following; only public otherwise) -->
+  <section class="mb-8">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-semibold">Lists</h2>
+      {% if not is_following %}
+        <span class="text-xs text-gray-500">You’re seeing public lists</span>
+      {% endif %}
+    </div>
+
+    {% if lists %}
+      <div class="space-y-3">
+        {% for L in lists %}
+          <article class="bg-white rounded-2xl shadow p-4">
+            <div class="flex items-start justify-between">
+              <div class="min-w-0">
+                <div class="font-medium truncate">{{ L.title }}</div>
+                <div class="text-xs text-gray-500 mt-0.5">
+                  {{ L.places_count|default:0 }} places
+                  {% if not L.is_public %} · Private{% endif %}
+                </div>
+              </div>
+              {% if L.updated_at %}
+                <div class="text-xs text-gray-500 whitespace-nowrap">
+                  Updated {{ L.updated_at|date:"M j" }}
+                </div>
+              {% endif %}
+            </div>
+
+            {% with preview_pins=L.pins.all|slice:":5" %}
+              {% if preview_pins %}
+                <div class="mt-3 flex flex-wrap gap-2 text-sm">
+                  {% for p in preview_pins %}
+                    {% if p.restaurant %}
+                      <a href="{% url 'places:restaurant_detail' p.restaurant.id %}"
+                         class="px-2 py-1 rounded-full bg-gray-100 text-gray-700 hover:underline">
+                        {{ p.restaurant.name }}
+                      </a>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="mt-2 text-sm text-gray-500">No places yet.</div>
+              {% endif %}
+            {% endwith %}
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-sm text-gray-500">
+        {% if is_following %}
+          No lists yet.
+        {% else %}
+          Follow this user to see all their lists.
+        {% endif %}
+      </p>
+    {% endif %}
+  </section>
+
+  <!-- Recent reviews -->
+  <section class="mb-8">
+    <h2 class="text-lg font-semibold mb-3">Recent reviews</h2>
+    {% if recent_reviews %}
+      <div class="space-y-4">
+        {% for r in recent_reviews %}
+          <article class="bg-white rounded-2xl shadow p-4">
+            <div class="text-xs text-gray-500">{{ r.created_at|date:"M j, H:i" }}</div>
+            <div class="mt-1 font-semibold">
+              <a class="hover:underline" href="{% url 'places:restaurant_detail' r.restaurant.id %}">
+                {{ r.restaurant.name }}
+              </a>
+            </div>
+            {% if r.text %}
+              <p class="mt-1 text-gray-800">{{ r.text }}</p>
+            {% endif %}
+            <div class="mt-2">
+              <a href="{% url 'places:restaurant_detail' r.restaurant.id %}"
+                 class="text-indigo-600 hover:underline">
+                See restaurant
+              </a>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-sm text-gray-500">No reviews yet.</p>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}
