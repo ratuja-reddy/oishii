@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold">Find Friends</h1>
+    <a href="{% url 'friends' %}" class="text-sm px-3 py-1 rounded-full border border-gray-300 hover:bg-gray-50">
+      ← Back to Friends
+    </a>
+  </div>
+
+  <!-- Regular GET form; searches only when you press Search -->
+  <form method="get" action="{% url 'friends_find' %}" class="flex items-center gap-2">
+    <input
+      id="people-q"
+      name="q"
+      type="text"
+      value="{{ q }}"
+      placeholder="Search by username, name, or email…"
+      class="flex-1 rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+    <button type="submit"
+            class="px-4 py-2 rounded-xl border border-gray-300 bg-white hover:bg-gray-50">
+      Search
+    </button>
+  </form>
+
+  <!-- Results -->
+  <div class="mt-4">
+    {% if users is None and not q %}
+      <div class="text-sm text-gray-500">Type a query and press Search.</div>
+    {% elif users and users.exists %}
+      <ul class="divide-y divide-gray-100">
+        {% for u in users %}
+          <li class="py-3 flex items-center gap-3">
+            {% if u.profile and u.profile.avatar %}
+              <img src="{{ u.profile.avatar.url }}" alt="{{ u.username }} avatar"
+                   class="h-8 w-8 rounded-full object-cover ring-1 ring-white shadow-sm">
+            {% else %}
+              <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                {{ u.username|first|upper }}
+              </div>
+            {% endif %}
+
+            <div class="min-w-0">
+              <div class="font-medium truncate">@{{ u.username }}</div>
+              {% if u.first_name or u.last_name %}
+                <div class="text-xs text-gray-500 truncate">{{ u.first_name }} {{ u.last_name }}</div>
+              {% endif %}
+              <div class="text-xs text-gray-400 truncate">{{ u.email }}</div>
+            </div>
+
+            <div class="ml-auto">
+              {% include "social/_follow_button.html" with target_user=u following_ids=following_ids %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="text-sm text-gray-500">No users found for “{{ q }}”.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

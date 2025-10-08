@@ -1,22 +1,62 @@
 {% extends "base.html" %}
+
+{% block title %}My Friends{% endblock %}
+
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">My Friends</h1>
+<div class="max-w-3xl mx-auto">
 
-<h2 class="font-semibold mb-2">Following</h2>
-<ul class="space-y-1 mb-6">
-  {% for f in following %}
-    <li class="bg-white rounded-xl p-3 shadow">@{{ f.followee.username }}</li>
-  {% empty %}
-    <li class="text-gray-600">You’re not following anyone yet.</li>
-  {% endfor %}
-</ul>
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold">Friends & Follows</h1>
+    <a href="{% url 'friends_find' %}"
+       class="text-sm px-3 py-1 rounded-full border border-gray-300 hover:bg-gray-50">
+      + Find Friends
+    </a>
+  </div>
 
-<h2 class="font-semibold mb-2">Followers</h2>
-<ul class="space-y-1">
-  {% for f in followers %}
-    <li class="bg-white rounded-xl p-3 shadow">@{{ f.follower.username }}</li>
-  {% empty %}
-    <li class="text-gray-600">No followers yet.</li>
-  {% endfor %}
-</ul>
+  <!-- Counts -->
+  <div class="mb-3 text-sm text-gray-600">
+    <span class="font-semibold">{{ following_count }}</span> friends you follow
+    • <span class="font-semibold">{{ followers_count }}</span> followers
+  </div>
+
+  <!-- Search -->
+  <form action="{% url 'friends_find' %}" method="get" class="mb-4 flex gap-2">
+    <input name="q" type="text" placeholder="Search your friends…"
+           class="flex-1 rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <button type="submit"
+            class="px-4 py-2 rounded-xl border border-gray-300 bg-white hover:bg-gray-50">
+      Search
+    </button>
+  </form>
+
+  <!-- Following list -->
+  <section class="mb-8">
+    <h2 class="text-lg font-semibold mb-2">Following</h2>
+    {% if following_users %}
+      <ul class="bg-white rounded-2xl shadow divide-y divide-gray-100">
+        {% for person in following_users %}
+          {% include "social/_friend_row.html" with person=person following_ids=following_ids %}
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-gray-500 text-sm">You’re not following anyone yet.</p>
+    {% endif %}
+  </section>
+
+  <!-- Followers list -->
+  <section>
+    <h2 class="text-lg font-semibold mb-2">Followers</h2>
+    {% if followers_users %}
+      <ul class="bg-white rounded-2xl shadow divide-y divide-gray-100">
+        {% for person in following_users %}
+          {% include "social/_friend_row.html" with person=person following_ids=following_ids %}
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-gray-500 text-sm">No followers yet.</p>
+    {% endif %}
+  </section>
+
+</div>
 {% endblock %}

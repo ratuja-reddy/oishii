@@ -1,0 +1,62 @@
+<li class="flex items-center gap-4 px-4 py-4">
+  {% if person.profile and person.profile.avatar %}
+    <img src="{{ person.profile.avatar.url }}"
+         alt="{{ person.username }} avatar"
+         class="h-12 w-12 rounded-full object-cover ring-1 ring-gray-200 shadow-sm">
+  {% else %}
+    <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500">
+      {{ person.username|first|upper }}
+    </div>
+  {% endif %}
+
+  <div class="flex-1 min-w-0">
+    <!-- Name -->
+    <div class="font-medium text-gray-900 truncate">
+      {% if person.profile and person.profile.display_name %}
+        {{ person.profile.display_name }}
+      {% elif person.first_name or person.last_name %}
+        {{ person.first_name }}{% if person.last_name %} {{ person.last_name }}{% endif %}
+      {% else %}
+        @{{ person.username }}
+      {% endif %}
+    </div>
+
+    <!-- Username + location -->
+    <div class="text-sm text-gray-500 truncate">
+      @{{ person.username }}
+      {% if person.profile and person.profile.location %}
+        • {{ person.profile.location }}
+      {% endif %}
+    </div>
+
+    <!-- Stats -->
+    <div class="text-xs text-gray-600 mt-1">
+      {{ person.restaurants_count|default:0 }} restaurants
+      • {{ person.following_count|default:0 }} following
+      • {{ person.followers_count|default:0 }} followers
+    </div>
+  </div>
+
+  {% if show_action and request.user.id != person.id %}
+    <div class="ml-auto">
+      <form id="follow-{{ person.id }}"
+            hx-post="{% url 'toggle_follow' person.id %}"
+            hx-target="#follow-{{ person.id }}"
+            hx-swap="outerHTML"
+            class="inline">
+        {% csrf_token %}
+        {% if following_ids and person.id in following_ids %}
+          <button type="submit"
+                  class="px-3 py-1 rounded-full text-sm border text-red-700 border-red-300 hover:bg-red-50">
+            Unfollow
+          </button>
+        {% else %}
+          <button type="submit"
+                  class="px-3 py-1 rounded-full text-sm border text-gray-700 border-gray-300">
+            + Add Friend
+          </button>
+        {% endif %}
+      </form>
+    </div>
+  {% endif %}
+</li>
