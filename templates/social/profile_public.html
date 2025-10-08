@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}{{ person.username }} · Profile{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+
+  <!-- Header -->
+  <div class="flex items-start gap-4 mb-6">
+    {% if person.profile and person.profile.avatar %}
+      <img src="{{ person.profile.avatar.url }}"
+           alt="{{ person.username }} avatar"
+           class="h-20 w-20 rounded-full object-cover ring-1 ring-gray-200 shadow-sm">
+    {% else %}
+      <div class="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center text-xl text-gray-600">
+        {{ person.username|first|upper }}
+      </div>
+    {% endif %}
+
+    <div class="flex-1 min-w-0">
+      <div class="text-2xl font-semibold">
+        {% if person.profile and person.profile.display_name %}
+          {{ person.profile.display_name }}
+        {% elif person.first_name or person.last_name %}
+          {{ person.first_name }}{% if person.last_name %} {{ person.last_name }}{% endif %}
+        {% else %}
+          @{{ person.username }}
+        {% endif %}
+      </div>
+      <div class="text-sm text-gray-500">
+        @{{ person.username }}
+        {% if person.profile and person.profile.location %}
+          • {{ person.profile.location }}
+        {% endif %}
+      </div>
+
+      {% if person.profile and person.profile.bio %}
+        <p class="mt-2 text-gray-800">{{ person.profile.bio }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Follow/Unfollow (read-only page still lets *you* follow) -->
+    {% if request.user.id != person.id %}
+      <form id="follow-{{ person.id }}"
+            hx-post="{% url 'toggle_follow' person.id %}"
+            hx-target="#follow-{{ person.id }}"
+            hx-swap="outerHTML">
+        {% csrf_token %}
+        {% if is_following %}
+          <button type="submit"
+                  class="px-3 py-1 rounded-full text-sm border text-red-700 border-red-300 hover:bg-red-50">
+            Unfollow
+          </button>
+        {% else %}
+          <button type="submit"
+                  class="px-3 py-1 rounded-full text-sm border text-gray-700 border-gray-300">
+            + Follow
+          </button>
+        {% endif %}
+      </form>
+    {% endif %}
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-3 gap-3 mb-6">
+    <div class="bg-white rounded-2xl shadow p-4 text-center">
+      <div class="text-2xl font-semibold">{{ restaurants_count }}</div>
+      <div class="text-xs text-gray-500">restaurants</div>
+    </div>
+    <div class="bg-white rounded-2xl shadow p-4 text-center">
+      <div class="text-2xl font-semibold">{{ following_count }}</div>
+      <div class="text-xs text-gray-500">following</div>
+    </div>
+    <div class="bg-white rounded-2xl shadow p-4 text-center">
+      <div class="text-2xl font-semibold">{{ followers_count }}</div>
+      <div class="text-xs text-gray-500">followers</div>
+    </div>
+  </div>
+
+  <!-- Recent reviews -->
+  <section class="mb-8">
+    <h2 class="text-lg font-semibold mb-3">Recent reviews</h2>
+    {% if recent_reviews %}
+      <div class="space-y-4">
+        {% for r in recent_reviews %}
+          <article class="bg-white rounded-2xl shadow p-4">
+            <div class="text-sm text-gray-500">{{ r.created_at|date:"M j, H:i" }}</div>
+            <div class="mt-1 font-semibold">{{ r.restaurant.name }}</div>
+            {% if r.text %}
+              <p class="mt-1 text-gray-800">{{ r.text }}</p>
+            {% endif %}
+            <div class="mt-2">
+              <a href="{{ r.restaurant.get_absolute_url }}" class="text-indigo-600 hover:underline">
+                See restaurant
+              </a>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-gray-500 text-sm">No reviews yet.</p>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}

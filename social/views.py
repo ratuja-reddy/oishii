@@ -7,6 +7,8 @@ from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
+from places.models import Review
+
 from .forms import ProfileForm, UserEditForm
 from .models import Activity, Follow, Like, Profile
 
@@ -88,6 +90,51 @@ def friends(request):
     return render(request, "social/friends.html", context)
 
 
+@login_required
+def profile_public(request, username: str):
+    """
+    Read-only profile for any user.
+    Shows avatar, name, location, bio, counts, and recent reviews.
+    """
+    person = get_object_or_404(
+        User.objects.select_related("profile"),
+        username=username,
+    )
+
+    # Counts
+    # If Review.user uses related_name="reviews" change "review_set" to "reviews"
+    review_join = "review_set"  # or "reviews"
+    restaurants_count = (
+        Review.objects.filter(user=person).values("restaurant").distinct().count()
+    )
+    following_count = Follow.objects.filter(follower=person).count()
+    followers_count = Follow.objects.filter(followee=person).count()
+
+    # Are *you* following them?
+    is_following = Follow.objects.filter(
+        follower=request.user, followee=person
+    ).exists()
+
+    # Recent activity (limit to reviews for now)
+    recent_reviews = (
+        Review.objects
+        .select_related("restaurant", "user")
+        .filter(user=person)
+        .order_by("-created_at")[:10]
+    )
+
+    return render(
+        request,
+        "social/profile_public.html",
+        {
+            "person": person,
+            "restaurants_count": restaurants_count,
+            "following_count": following_count,
+            "followers_count": followers_count,
+            "is_following": is_following,
+            "recent_reviews": recent_reviews,
+        },
+    )
 # ---------- Feed ----------
 
 @login_required

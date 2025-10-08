@@ -11,15 +11,37 @@
       <!-- Header: avatar + name + time -->
       <header class="flex items-center gap-3 mb-3">
         {% if a.user.profile and a.user.profile.avatar %}
-          <img src="{{ a.user.profile.avatar.url }}"
-               alt="{{ a.user.username }} avatar"
-               class="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-400/70">
+          <a href="{% url 'profile_public' a.user.username %}">
+            <img src="{{ a.user.profile.avatar.url }}"
+                 alt="{{ a.user.username }} avatar"
+                 class="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-400/70">
+          </a>
         {% else %}
-          <div class="w-10 h-10 rounded-full bg-gray-200 ring-2 ring-indigo-200"></div>
+          <a href="{% url 'profile_public' a.user.username %}">
+            <div class="w-10 h-10 rounded-full bg-gray-200 ring-2 ring-indigo-200"></div>
+          </a>
         {% endif %}
-        <div class="flex-1 leading-tight">
-          <div class="font-semibold text-gray-900">@{{ a.user.username }}</div>
-          <div class="text-xs text-gray-500">{{ a.created_at|date:"M j, H:i" }}</div>
+
+        <div class="flex-1 leading-tight min-w-0">
+          <!-- Prefer display_name, then full name, then @username -->
+          <div class="font-semibold text-gray-900 truncate">
+            <a class="hover:underline" href="{% url 'profile_public' a.user.username %}">
+              {% if a.user.profile and a.user.profile.display_name %}
+                {{ a.user.profile.display_name }}
+              {% elif a.user.first_name or a.user.last_name %}
+                {{ a.user.first_name }}{% if a.user.last_name %} {{ a.user.last_name }}{% endif %}
+              {% else %}
+                @{{ a.user.username }}
+              {% endif %}
+            </a>
+          </div>
+          <div class="text-xs text-gray-500 truncate">
+            <a class="hover:underline" href="{% url 'profile_public' a.user.username %}">@{{ a.user.username }}</a>
+            {% if a.user.profile and a.user.profile.location %}
+              • {{ a.user.profile.location }}
+            {% endif %}
+            • {{ a.created_at|date:"M j, H:i" }}
+          </div>
         </div>
       </header>
 
@@ -30,7 +52,9 @@
             {{ a.restaurant.name }}
           </a>
         </h2>
-        {% include "components/stars.html" with rating=a.review.overall_rating size="md" %}
+        {% if a.review.overall_rating %}
+          {% include "components/stars.html" with rating=a.review.overall_rating size="md" %}
+        {% endif %}
       </div>
 
       <!-- Review text -->

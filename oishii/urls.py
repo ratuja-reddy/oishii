@@ -28,6 +28,7 @@ urlpatterns = [
     path("social/like/<int:pk>/", sviews.toggle_like, name="toggle_like"),
     path("me/", sviews.profile_me, name="profile_me"),
     path("me/edit/", sviews.edit_profile, name="edit_profile"),
+    path("u/<str:username>/", sviews.profile_public, name="profile_public"),
     # Include places URLs UNDER a namespace
     path("", include(("places.urls", "places"), namespace="places")),
 
