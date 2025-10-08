@@ -1,0 +1,29 @@
+{% if users %}
+  <ul class="divide-y divide-gray-100">
+    {% for u in users %}
+      <li class="py-3 flex items-center gap-3">
+        {% if u.profile and u.profile.avatar %}
+          <img src="{{ u.profile.avatar.url }}" alt="{{ u.username }} avatar"
+               class="h-8 w-8 rounded-full object-cover ring-1 ring-white shadow-sm">
+        {% else %}
+          <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+            {{ u.username|first|upper }}
+          </div>
+        {% endif %}
+
+        <div class="min-w-0">
+          <div class="font-medium truncate">@{{ u.username }}</div>
+          {% if u.first_name or u.last_name %}
+            <div class="text-xs text-gray-500 truncate">{{ u.first_name }} {{ u.last_name }}</div>
+          {% endif %}
+        </div>
+
+        <div class="ml-auto">
+            {% include "social/_follow_button.html" with target_user=u following_ids=following_ids %}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="text-sm text-gray-500">No users found.</div>
+{% endif %}

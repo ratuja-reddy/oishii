@@ -1,0 +1,47 @@
+{% comment %}
+Inputs:
+- target_user (required)
+- following_ids (optional set/list of IDs current user follows)
+Behavior:
+- If following_ids is provided, we compute following state inside the partial.
+- Otherwise we’ll still work if the view passes `is_following` explicitly.
+{% endcomment %}
+
+{% if request.user.id == target_user.id %}
+  <!-- No button for self -->
+{% else %}
+  <form id="follow-{{ target_user.id }}"
+        hx-post="{% url 'toggle_follow' target_user.id %}"
+        hx-target="#follow-{{ target_user.id }}"
+        hx-swap="outerHTML"
+        class="inline">
+    {% csrf_token %}
+
+    {% if following_ids %}
+      {% if target_user.id in following_ids %}
+        <button type="submit"
+                class="px-3 py-1 rounded-full text-sm border bg-indigo-600 text-white border-indigo-600">
+          ✓ Following
+        </button>
+      {% else %}
+        <button type="submit"
+                class="px-3 py-1 rounded-full text-sm border text-gray-700 border-gray-300">
+          + Add Friend
+        </button>
+      {% endif %}
+    {% else %}
+      {# fallback if view passed is_following explicitly #}
+      {% if is_following %}
+        <button type="submit"
+                class="px-3 py-1 rounded-full text-sm border bg-indigo-600 text-white border-indigo-600">
+          ✓ Following
+        </button>
+      {% else %}
+        <button type="submit"
+                class="px-3 py-1 rounded-full text-sm border text-gray-700 border-gray-300">
+          + Add Friend
+        </button>
+      {% endif %}
+    {% endif %}
+  </form>
+{% endif %}

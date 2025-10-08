@@ -2,6 +2,8 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
+from django.db.models import Count, Q
+from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
@@ -38,13 +40,52 @@ def profile_me(request):
 
 @login_required
 def friends(request):
-    following = Follow.objects.filter(follower=request.user).select_related("followee")
-    followers = Follow.objects.filter(followee=request.user).select_related("follower")
-    return render(
-        request,
-        "social/friends.html",
-        {"following": following, "followers": followers, "active_tab": "friends"},
+    me = request.user
+
+    # IDs of people I follow / who follow me
+    following_ids = list(Follow.objects.filter(follower=me).values_list("followee_id", flat=True))
+    follower_ids  = list(Follow.objects.filter(followee=me).values_list("follower_id", flat=True))
+
+    # ---- Restaurants count (choose ONE of these, keep the other commented) ----
+    # If Review.user has related_name="reviews":
+    review_join = "reviews"
+    # If your Review.user has NO related_name (default -> review_set), then use:
+    # review_join = "review_set"
+
+    # People I follow, as User queryset with annotations
+    following_users = (
+        User.objects
+        .filter(id__in=following_ids)
+        .annotate(
+            restaurants_count=Count(f"{review_join}__restaurant", distinct=True),
+            following_count=Count("following", distinct=True),  # Follow rows where this user is follower
+            followers_count=Count("followers", distinct=True),  # Follow rows where this user is followee
+        )
+        .order_by("username")
     )
+
+    # People who follow me, as User queryset with annotations
+    followers_users = (
+        User.objects
+        .filter(id__in=follower_ids)
+        .annotate(
+            restaurants_count=Count(f"{review_join}__restaurant", distinct=True),
+            following_count=Count("following", distinct=True),
+            followers_count=Count("followers", distinct=True),
+        )
+        .order_by("username")
+    )
+
+    context = {
+        "following_users": following_users,
+        "followers_users": followers_users,
+        "following_count": len(following_ids),
+        "followers_count": len(follower_ids),
+        # keep this so we can still show an action button where needed
+        "following_ids": set(following_ids),
+        "active_tab": "friends",
+    }
+    return render(request, "social/friends.html", context)
 
 
 # ---------- Feed ----------
@@ -102,6 +143,92 @@ def toggle_like(request, pk):
 
     return render(request, "social/_like_button.html", {"a": activity})
 
+# ---------- Follow (HTMX) ----------
+
+User = get_user_model()
+
+@login_required
+@require_http_methods(["POST"])
+def toggle_follow(request, user_id: int):
+    """
+    HTMX endpoint: follow/unfollow a user.
+    Returns the follow button partial so the UI updates in place.
+    """
+    if request.user.id == user_id:
+        return HttpResponseBadRequest("Cannot follow yourself")
+
+    target = get_object_or_404(User, pk=user_id)
+
+    obj, created = Follow.objects.get_or_create(
+        follower=request.user, followee=target
+    )
+    if not created:
+        obj.delete()
+        is_following = False
+    else:
+        is_following = True
+
+    return render(
+        request,
+        "social/_follow_button.html",
+        {"target_user": target, "is_following": is_following},
+    )
+
+
+@login_required
+def find_friends(request):
+    """
+    Renders the Find Friends page and performs search when ?q= is present.
+    """
+    q = (request.GET.get("q") or "").strip()
+
+    users = None
+    if q:
+        users = (User.objects
+                 .exclude(id=request.user.id)
+                 .filter(
+                     Q(username__icontains=q) |
+                     Q(first_name__icontains=q) |
+                     Q(last_name__icontains=q) |
+                     Q(email__icontains=q)
+                 )
+                 .order_by("username")[:25])
+
+    following_ids = set(
+        Follow.objects.filter(follower=request.user).values_list("followee_id", flat=True)
+    )
+
+    return render(
+        request,
+        "social/friends_find.html",
+        {"q": q, "users": users, "following_ids": following_ids}
+    )
+
+@login_required
+def find_friends_search(request):
+    """
+    HTMX endpoint returning a list of users matching ?q=...
+    """
+    q = (request.GET.get("q") or "").strip()
+
+    users = User.objects.exclude(id=request.user.id)
+    if q:
+        users = users.filter(
+            Q(username__icontains=q) |
+            Q(first_name__icontains=q) |
+            Q(last_name__icontains=q)
+        )
+    users = users.order_by("username")[:25]
+
+    following_ids = set(
+        Follow.objects.filter(follower=request.user).values_list("followee_id", flat=True)
+    )
+
+    return render(
+        request,
+        "social/_people_results.html",
+        {"users": users, "following_ids": following_ids},
+    )
 
 @login_required
 @require_http_methods(["GET", "POST"])
