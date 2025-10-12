@@ -2,17 +2,15 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods, require_POST
 
-from places.models import Review, List, Pin
+from places.models import List, Pin, Review
 
 from .forms import ProfileForm, UserEditForm
-from django.db.models import Prefetch, Count
-from .models import Activity, Follow, Like, Comment
+from .models import Activity, Comment, Follow, Like, Profile
 
 # ---------- Auth / Profile ----------
 
@@ -230,7 +228,7 @@ def add_comment(request, activity_id):
     # send the user back to where they were (keeps scroll position with an anchor)
     next_url = request.POST.get("next") or reverse("feed")
     return redirect(next_url)
-    
+
 # ---------- Follow (HTMX) ----------
 
 User = get_user_model()

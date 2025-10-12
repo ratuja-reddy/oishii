@@ -1,6 +1,8 @@
 # oishii/oishii/settings.py
-from pathlib import Path
 import os
+from pathlib import Path
+from urllib.parse import urlparse
+
 import dj_database_url
 
 # --------------------------------------------------------------------------------------
@@ -34,7 +36,8 @@ INSTALLED_APPS = [
     "storages",  # safe even if USE_S3=0
 
     # Local apps
-    "social",    # present in your repo; add others here if needed
+    "social",
+    "places",
 ]
 
 MIDDLEWARE = [
@@ -70,27 +73,21 @@ TEMPLATES = [
 WSGI_APPLICATION = "oishii.wsgi.application"
 
 # --------------------------------------------------------------------------------------
-# Database
-# - Local: SQLite by default
-# - Prod: set DATABASE_URL (Postgres on Render/Railway/DO)
+# Database: SQLite for local, Postgres in prod
 # --------------------------------------------------------------------------------------
+DEFAULT_SQLITE_URL = f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+DB_URL = os.getenv("DATABASE_URL", DEFAULT_SQLITE_URL)
+
+scheme = urlparse(DB_URL).scheme
+IS_POSTGRES = scheme in ("postgres", "postgresql")
+
 DATABASES = {
     "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-        ssl_require=os.getenv("DB_SSL", "1") in {"1", "true", "True", "yes", "on"},
+        default=DB_URL,
+        conn_max_age=600,                      # good for Postgres; harmless for SQLite
+        ssl_require=IS_POSTGRES and not DEBUG, # SSL in prod Postgres only
     )
 }
-
-# --------------------------------------------------------------------------------------
-# Password validation
-# --------------------------------------------------------------------------------------
-AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
-]
 
 # --------------------------------------------------------------------------------------
 # I18N / TZ
@@ -105,29 +102,33 @@ USE_TZ = True
 # --------------------------------------------------------------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-# Include your source static folder if you keep one:
 candidate_static = BASE_DIR / "static"
 if candidate_static.exists():
     STATICFILES_DIRS = [candidate_static]
 
-# WhiteNoise hashed + compressed storage
+# Always include a default storage; override to S3 below when USE_S3=1
 STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
-    # "default" is set below. If not using S3, Django's default FileSystemStorage is used.
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
 }
 
 # --------------------------------------------------------------------------------------
 # Media: Cloudflare R2 (S3-compatible) or local FS
-# - Flip on by setting USE_S3=1 and the R2 env vars.
-# - To migrate to AWS S3 later: change keys/region and remove the endpoint (or set AWS endpoint).
 # --------------------------------------------------------------------------------------
 USE_S3 = os.getenv("USE_S3", "0") in {"1", "true", "True", "yes", "on"}
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Optional env override (recommended): e.g. https://pub-XXXX.r2.dev/ or https://media.myoishii.app/
 ENV_MEDIA_URL = os.getenv("MEDIA_URL")
+
+if ENV_MEDIA_URL:
+    MEDIA_URL = ENV_MEDIA_URL if ENV_MEDIA_URL.endswith("/") else ENV_MEDIA_URL + "/"
+else:
+    MEDIA_URL = "/media/"
 
 if USE_S3:
     AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
@@ -139,33 +140,20 @@ if USE_S3:
     AWS_S3_SIGNATURE_VERSION = "s3v4"
     AWS_S3_ADDRESSING_STYLE = "virtual"  # works well with R2/CDN
 
-    # Public objects; don’t attach per-object ACLs; no signed querystrings for public media
+    # Public objects; no per-object ACLs; no signed querystrings for public media
     AWS_DEFAULT_ACL = None
     AWS_QUERYSTRING_AUTH = False
-    AWS_S3_OBJECT_PARAMETERS = {
-        "CacheControl": "max-age=31536000, public"
-    }
+    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=31536000, public"}
 
-    STORAGES["default"] = {
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-    }
+    # Use S3 for default storage when enabled
+    STORAGES["default"] = {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"}
 
-    # MEDIA_URL precedence:
-    # 1) If you set MEDIA_URL in env (Public Dev URL or custom domain), use that.
-    # 2) Else, fall back to direct endpoint/bucket path.
-    if ENV_MEDIA_URL:
-        MEDIA_URL = ENV_MEDIA_URL if ENV_MEDIA_URL.endswith("/") else ENV_MEDIA_URL + "/"
-    else:
+    # If MEDIA_URL wasn't set explicitly, fall back to endpoint/bucket path
+    if not ENV_MEDIA_URL:
         MEDIA_URL = (
             f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"
             if AWS_S3_ENDPOINT_URL else "/media/"
         )
-else:
-    # Local filesystem (dev). Allow env override but ensure trailing slash.
-    if ENV_MEDIA_URL:
-        MEDIA_URL = ENV_MEDIA_URL if ENV_MEDIA_URL.endswith("/") else ENV_MEDIA_URL + "/"
-    else:
-        MEDIA_URL = "/media/"
 
 # --------------------------------------------------------------------------------------
 # Security (enable fully in prod)
@@ -178,11 +166,9 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000"))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    # Optional: tighten referrer policy
     SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 # Trust your domains for CSRF if behind a proxy/CDN
-# Example: CSRF_TRUSTED_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
 _csrf_origins = os.getenv("CSRF_TRUSTED_ORIGINS")
 if _csrf_origins:
     CSRF_TRUSTED_ORIGINS = [o for o in _csrf_origins.split(",") if o]
