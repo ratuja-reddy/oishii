@@ -122,38 +122,49 @@ STORAGES = {
 USE_S3 = os.getenv("USE_S3", "0") in {"1", "true", "True", "yes", "on"}
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Optional env override (recommended): e.g. https://pub-XXXX.r2.dev/ or https://media.myoishii.app/
+# Optional direct override (e.g. https://pub-XXXX.r2.dev/ or https://media.myoishii.app/)
 ENV_MEDIA_URL = os.getenv("MEDIA_URL")
 
-if ENV_MEDIA_URL:
-    MEDIA_URL = ENV_MEDIA_URL if ENV_MEDIA_URL.endswith("/") else ENV_MEDIA_URL + "/"
+if not USE_S3:
+    # Local dev: filesystem
+    MEDIA_URL = (ENV_MEDIA_URL if ENV_MEDIA_URL else "/media/")
+    if not MEDIA_URL.endswith("/"):
+        MEDIA_URL += "/"
 else:
-    MEDIA_URL = "/media/"
-
-if USE_S3:
+    # R2/S3
     AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
     AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
-    # R2 endpoint like: https://<accountid>.r2.cloudflarestorage.com
-    AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
+    AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")  # https://<ACCOUNT_ID>.r2.cloudflarestorage.com
     AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "auto")
     AWS_S3_SIGNATURE_VERSION = "s3v4"
-    AWS_S3_ADDRESSING_STYLE = "virtual"  # works well with R2/CDN
+    AWS_S3_ADDRESSING_STYLE = "virtual"
 
-    # Public objects; no per-object ACLs; no signed querystrings for public media
+    # Public-read; no per-object ACLs; nice caching
     AWS_DEFAULT_ACL = None
     AWS_QUERYSTRING_AUTH = False
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=31536000, public"}
 
-    # Use S3 for default storage when enabled
+    # Tell django-storages to build URLs with a public host (preferred)
+    AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN")  # e.g. pub-XXXX.r2.dev or media.myoishii.app
+
     STORAGES["default"] = {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"}
 
-    # If MEDIA_URL wasn't set explicitly, fall back to endpoint/bucket path
-    if not ENV_MEDIA_URL:
-        MEDIA_URL = (
-            f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"
-            if AWS_S3_ENDPOINT_URL else "/media/"
-        )
+    # MEDIA_URL precedence:
+    # 1) explicit MEDIA_URL env
+    # 2) AWS_S3_CUSTOM_DOMAIN (public host)
+    # 3) endpoint/bucket path (often NOT public on R2; last resort)
+    if ENV_MEDIA_URL:
+        MEDIA_URL = ENV_MEDIA_URL
+    elif AWS_S3_CUSTOM_DOMAIN:
+        MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+    elif AWS_S3_ENDPOINT_URL:
+        MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"
+    else:
+        MEDIA_URL = "/media/"
+
+    if not MEDIA_URL.endswith("/"):
+        MEDIA_URL += "/"
 
 # --------------------------------------------------------------------------------------
 # Security (enable fully in prod)
