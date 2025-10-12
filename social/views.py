@@ -6,12 +6,13 @@ from django.db.models import Count, Q
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_POST
 
 from places.models import Review, List, Pin
 
 from .forms import ProfileForm, UserEditForm
-from .models import Activity, Follow, Like, Profile
-from django.db.models import Count, Prefetch
+from django.db.models import Prefetch, Count
+from .models import Activity, Follow, Like, Comment
 
 # ---------- Auth / Profile ----------
 
@@ -167,8 +168,17 @@ def feed(request):
 
     activities = (
         Activity.objects
-        .select_related("user", "user__profile", "restaurant", "review")  # 👈 pull profile too
+        .select_related("user", "user__profile", "restaurant", "review")
         .filter(user_id__in=audience, type="review")
+        .prefetch_related(                                                # 👈 add
+            Prefetch(
+                "comments",
+                queryset=Comment.objects
+                    .select_related("user", "user__profile")
+                    .order_by("created_at")
+            )
+        )
+        .annotate(comment_count=Count("comments"))                         # 👈 add
         .order_by("-created_at")[:50]
     )
 
@@ -207,6 +217,20 @@ def toggle_like(request, pk):
 
     return render(request, "social/_like_button.html", {"a": activity})
 
+
+
+@require_POST
+@login_required
+def add_comment(request, activity_id):
+    activity = get_object_or_404(Activity, id=activity_id)
+    text = (request.POST.get("text") or "").strip()
+    if text:
+        Comment.objects.create(user=request.user, activity=activity, text=text)
+
+    # send the user back to where they were (keeps scroll position with an anchor)
+    next_url = request.POST.get("next") or reverse("feed")
+    return redirect(next_url)
+    
 # ---------- Follow (HTMX) ----------
 
 User = get_user_model()

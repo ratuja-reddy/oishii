@@ -26,6 +26,7 @@ urlpatterns = [
     path("friends/find/search/", sviews.find_friends_search, name="friends_find_search"),  # HTMX results
     path("social/follow/<int:user_id>/", sviews.toggle_follow, name="toggle_follow"),      # HTMX toggle
     path("social/like/<int:pk>/", sviews.toggle_like, name="toggle_like"),
+    path("activity/<int:activity_id>/comment/", sviews.add_comment, name="add_comment"),
     path("me/", sviews.profile_me, name="profile_me"),
     path("me/edit/", sviews.edit_profile, name="edit_profile"),
     path("u/<str:username>/", sviews.profile_public, name="profile_public"),
