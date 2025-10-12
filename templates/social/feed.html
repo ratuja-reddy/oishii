@@ -7,25 +7,23 @@
 <div class="space-y-5">
   {% for a in activities %}
     <!-- Activity card -->
-    <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition">
+    <article id="activity-{{ a.id }}" class="bg-white rounded-2xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition">
       <!-- Header: avatar + name + time -->
       <header class="flex items-center gap-3 mb-3">
         {% if a.user.profile and a.user.profile.avatar %}
-          <a href="{% url 'profile_public' a.user.username %}">
+          <a href="{% if a.user.id == request.user.id %}{% url 'profile_me' %}{% else %}{% url 'profile_public' a.user.username %}{% endif %}">
             <img src="{{ a.user.profile.avatar.url }}"
                  alt="{{ a.user.username }} avatar"
                  class="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-400/70">
           </a>
         {% else %}
-          <a href="{% url 'profile_public' a.user.username %}">
+          <a href="{% if a.user.id == request.user.id %}{% url 'profile_me' %}{% else %}{% url 'profile_public' a.user.username %}{% endif %}">
             <div class="w-10 h-10 rounded-full bg-gray-200 ring-2 ring-indigo-200"></div>
           </a>
         {% endif %}
-
         <div class="flex-1 leading-tight min-w-0">
-          <!-- Prefer display_name, then full name, then @username -->
           <div class="font-semibold text-gray-900 truncate">
-            <a class="hover:underline" href="{% url 'profile_public' a.user.username %}">
+            <a class="hover:underline" href="{% if a.user.id == request.user.id %}{% url 'profile_me' %}{% else %}{% url 'profile_public' a.user.username %}{% endif %}">
               {% if a.user.profile and a.user.profile.display_name %}
                 {{ a.user.profile.display_name }}
               {% elif a.user.first_name or a.user.last_name %}
@@ -36,10 +34,10 @@
             </a>
           </div>
           <div class="text-xs text-gray-500 truncate">
-            <a class="hover:underline" href="{% url 'profile_public' a.user.username %}">@{{ a.user.username }}</a>
-            {% if a.user.profile and a.user.profile.location %}
-              • {{ a.user.profile.location }}
-            {% endif %}
+            <a class="hover:underline" href="{% if a.user.id == request.user.id %}{% url 'profile_me' %}{% else %}{% url 'profile_public' a.user.username %}{% endif %}">
+              @{{ a.user.username }}
+            </a>
+            {% if a.user.profile and a.user.profile.location %} • {{ a.user.profile.location }}{% endif %}
             • {{ a.created_at|date:"M j, H:i" }}
           </div>
         </div>
@@ -62,7 +60,7 @@
         <p class="mt-2 text-gray-800 leading-snug">{{ a.review.text }}</p>
       {% endif %}
 
-      <!-- Sub-ratings as soft badges -->
+      <!-- Sub-ratings -->
       {% if a.review.food or a.review.service or a.review.value or a.review.atmosphere %}
         <div class="mt-3 flex flex-wrap gap-2 text-xs">
           {% if a.review.food %}
@@ -94,16 +92,54 @@
 
       <!-- Actions -->
       <footer class="mt-4 flex items-center gap-4">
-        <!-- Like button partial (is a <form> with CSRF inside) -->
         <div id="like-{{ a.id }}">
           {% include "social/_like_button.html" with a=a %}
         </div>
+
+        <div class="text-sm text-gray-600">💬 {{ a.comment_count|default:0 }}</div>
 
         <a class="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
            href="{% url 'places:restaurant_detail' a.restaurant.id %}">
           See restaurant
         </a>
       </footer>
+
+      <!-- Comments -->
+      <div class="mt-4 space-y-3">
+        {% if a.comments.all %}
+          {% for c in a.comments.all %}
+            <div class="flex items-start gap-2">
+              {% if c.user.profile and c.user.profile.avatar %}
+                <img src="{{ c.user.profile.avatar.url }}"
+                     class="h-8 w-8 rounded-full object-cover flex-shrink-0" alt="">
+              {% else %}
+                <div class="h-8 w-8 rounded-full bg-gray-200 flex-shrink-0"></div>
+              {% endif %}
+              <div class="bg-gray-50 rounded-2xl px-3 py-2 text-sm max-w-full">
+                <span class="font-medium">{{ c.user.username }}</span>
+                <span class="text-gray-800 break-words">{{ c.text }}</span>
+                <div class="text-[11px] text-gray-400 mt-0.5">{{ c.created_at|date:"M j, H:i" }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-sm text-gray-400">No comments yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- Comment form -->
+      <form method="post"
+            action="{% url 'add_comment' a.id %}"
+            class="mt-2 flex gap-2">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}#activity-{{ a.id }}">
+        <input type="text" name="text" placeholder="Add a comment..."
+               class="flex-1 border rounded-full px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        <button type="submit"
+                class="px-3 py-2 bg-indigo-600 text-white text-sm rounded-full hover:bg-indigo-700">
+          Post
+        </button>
+      </form>
     </article>
   {% empty %}
     <!-- Empty state -->
