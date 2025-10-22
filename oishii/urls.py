@@ -19,6 +19,7 @@ urlpatterns = [
     path("r/<int:pk>/lists/<int:list_id>/toggle/", pviews.toggle_in_list, name="toggle_in_list"),
     path("lists/create/", pviews.create_list, name="create_list"),
     path("lists/<int:list_id>/", pviews.list_detail, name="list_detail"),
+    path("lists/<int:list_id>/pin/<int:pin_id>/delete/", pviews.delete_pin, name="delete_pin"),
     # social views
     path("me/", sviews.profile_me, name="profile_me"),
     path("friends/", sviews.friends, name="friends"),
@@ -32,6 +33,7 @@ urlpatterns = [
     path("u/<str:username>/", sviews.profile_public, name="profile_public"),
     # Include places URLs UNDER a namespace
     path("", include(("places.urls", "places"), namespace="places")),
+
 
     # Auth
     path("accounts/", include("django.contrib.auth.urls")),

@@ -224,3 +224,16 @@ def list_detail(request, list_id):
     items = (Pin.objects.select_related("restaurant")
              .filter(list=lst).order_by("-created_at"))
     return render(request, "places/list_detail.html", {"lst": lst, "items": items})
+
+@login_required
+def delete_pin(request, list_id, pin_id):
+    lst = get_object_or_404(List, pk=list_id, owner=request.user)
+    pin = get_object_or_404(Pin, pk=pin_id, list=lst)
+    pin.delete()
+
+    # If this was an HTMX request, return a tiny fragment that updates the count.
+    if request.headers.get("HX-Request"):
+        return render(request, "places/_list_count.html", {"lst": lst})
+
+    # Normal navigation fallback
+    return redirect("list_detail", list_id=lst.id)
