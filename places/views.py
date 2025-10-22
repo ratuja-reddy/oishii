@@ -42,7 +42,9 @@ def restaurant_detail(request, pk):
         reviews = Review.objects.filter(
             restaurant=r,
             user_id__in=following_ids
-        ).select_related("user", "user__profile").order_by("-created_at")
+        ).select_related("user", "user__profile").prefetch_related(
+            "activities__comments__user__profile"
+        ).order_by("-created_at")
     else:
         # If not authenticated, show no reviews
         reviews = Review.objects.none()

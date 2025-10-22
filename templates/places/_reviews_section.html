@@ -75,6 +75,27 @@
               {% endif %}
             </div>
           {% endif %}
+
+          <!-- Comments section -->
+          {% if review.activities.first.comments.all %}
+            <div class="mt-4 space-y-3">
+              {% for comment in review.activities.first.comments.all %}
+                <div class="flex items-start gap-2">
+                  {% if comment.user.profile and comment.user.profile.avatar %}
+                    <img src="{{ comment.user.profile.avatar.url }}"
+                         class="h-8 w-8 rounded-full object-cover flex-shrink-0" alt="">
+                  {% else %}
+                    <div class="h-8 w-8 rounded-full bg-gray-200 flex-shrink-0"></div>
+                  {% endif %}
+                  <div class="bg-gray-50 rounded-2xl px-3 py-2 text-sm max-w-full">
+                    <span class="font-medium">{{ comment.user.username }}</span>
+                    <span class="text-gray-800 break-words">{{ comment.text }}</span>
+                    <div class="text-[11px] text-gray-400 mt-0.5">{{ comment.created_at|date:"M j, H:i" }}</div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
       {% endfor %}
     </div>
@@ -95,3 +116,4 @@
     </div>
   </div>
 {% endif %}
+

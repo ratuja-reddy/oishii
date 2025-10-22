@@ -55,6 +55,27 @@ class Comment(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
 
+class Notification(models.Model):
+    """Notifications for users when someone comments on their reviews."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="notifications")
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="notifications")
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Notification for {self.user.username} - {self.comment.user.username} commented"
+
+    @property
+    def message(self):
+        """Generate the notification message."""
+        commenter_name = self.comment.user.profile.display_name if self.comment.user.profile.display_name else self.comment.user.username
+        return f"{commenter_name} commented on your review!"
+
+
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
     display_name = models.CharField(max_length=80, blank=True)
