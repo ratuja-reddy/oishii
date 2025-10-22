@@ -252,3 +252,21 @@ def delete_pin(request, list_id, pin_id):
 
     # Normal navigation fallback
     return redirect("list_detail", list_id=lst.id)
+
+@login_required
+def delete_list(request, list_id):
+    """Delete a custom list (not the default 'visited' or 'saved' lists)."""
+    lst = get_object_or_404(List, pk=list_id, owner=request.user)
+
+    # Don't allow deletion of default lists
+    if lst.title.lower() in ['visited', 'saved', 'want to go']:
+        return HttpResponseBadRequest("Cannot delete default lists")
+
+    lst.delete()
+
+    # If this was an HTMX request, return empty response to remove the list from UI
+    if request.headers.get("HX-Request"):
+        return HttpResponse("")
+
+    # Normal navigation fallback
+    return redirect("my_restaurants")
