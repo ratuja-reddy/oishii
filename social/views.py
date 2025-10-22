@@ -3,14 +3,15 @@ from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.db.models import Count, Prefetch, Q
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods, require_POST
 
 from places.models import List, Pin, Review
 
 from .forms import ProfileForm, UserEditForm
-from .models import Activity, Comment, Follow, Like, Profile
+from .models import Activity, Comment, Follow, Like, Notification, Profile
 
 # ---------- Auth / Profile ----------
 
@@ -223,11 +224,42 @@ def add_comment(request, activity_id):
     activity = get_object_or_404(Activity, id=activity_id)
     text = (request.POST.get("text") or "").strip()
     if text:
-        Comment.objects.create(user=request.user, activity=activity, text=text)
+        comment = Comment.objects.create(user=request.user, activity=activity, text=text)
+
+        # Create notification for the review author if they're not the commenter
+        if activity.user != request.user:
+            from .models import Notification
+            Notification.objects.create(
+                user=activity.user,
+                comment=comment,
+                activity=activity
+            )
 
     # send the user back to where they were (keeps scroll position with an anchor)
     next_url = request.POST.get("next") or reverse("feed")
     return redirect(next_url)
+
+# ---------- Notifications ----------
+
+@login_required
+def notifications(request):
+    """Get user's notifications."""
+    notifications = request.user.notifications.all()[:10]  # Last 10 notifications
+    return render(request, "social/_notifications.html", {"notifications": notifications})
+
+@login_required
+def mark_notification_read(request, notification_id):
+    """Mark a notification as read."""
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification.is_read = True
+    notification.save()
+    return JsonResponse({"status": "success"})
+
+@login_required
+def notification_count(request):
+    """Get count of unread notifications."""
+    count = request.user.notifications.filter(is_read=False).count()
+    return JsonResponse({"count": count})
 
 # ---------- Follow (HTMX) ----------
 

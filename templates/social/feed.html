@@ -5,11 +5,23 @@
   <div class="flex justify-between items-center">
     <h1 class="font-black tracking-wide text-gray-900" style="font-family: 'Acid Grotesk', 'Acid Grotesque', 'Helvetica Neue', sans-serif; letter-spacing: 0.1em; font-size: 2rem; line-height: 1;">oishii</h1>
     <!-- Notification bell -->
-    <button class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-      </svg>
-    </button>
+    <div class="relative">
+      <button id="notification-bell" class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors relative">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+        </svg>
+      </button>
+      
+      <!-- Notification dropdown -->
+      <div id="notification-dropdown" class="absolute right-0 mt-2 w-[60rem] bg-white rounded-lg shadow-lg border border-gray-200 hidden z-50" style="min-width: 600px; max-width: 800px;">
+        <div class="p-4 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+        </div>
+        <div id="notification-content" class="max-h-96 overflow-y-auto">
+          <!-- Notifications will be loaded here -->
+        </div>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -168,5 +180,60 @@
     </div>
   {% endfor %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const notificationBell = document.getElementById('notification-bell');
+  const notificationDropdown = document.getElementById('notification-dropdown');
+  const notificationContent = document.getElementById('notification-content');
+
+  // Check for unread notifications on page load
+  function checkNotifications() {
+    fetch('{% url "notification_count" %}')
+      .then(response => response.json())
+      .then(data => {
+        if (data.count > 0) {
+          notificationBell.classList.add('text-indigo-600');
+          notificationBell.classList.remove('text-gray-600');
+        } else {
+          notificationBell.classList.remove('text-indigo-600');
+          notificationBell.classList.add('text-gray-600');
+        }
+      })
+      .catch(error => console.error('Error checking notifications:', error));
+  }
+
+  // Load notifications
+  function loadNotifications() {
+    fetch('{% url "notifications" %}')
+      .then(response => response.text())
+      .then(html => {
+        notificationContent.innerHTML = html;
+      })
+      .catch(error => console.error('Error loading notifications:', error));
+  }
+
+  // Toggle notification dropdown
+  notificationBell.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (notificationDropdown.classList.contains('hidden')) {
+      notificationDropdown.classList.remove('hidden');
+      loadNotifications();
+    } else {
+      notificationDropdown.classList.add('hidden');
+    }
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
+      notificationDropdown.classList.add('hidden');
+    }
+  });
+
+  // Check notifications on page load
+  checkNotifications();
+});
+</script>
 
 {% endblock %}
