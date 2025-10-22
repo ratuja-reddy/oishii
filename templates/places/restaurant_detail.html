@@ -43,12 +43,18 @@
   </div>
 
   <div class="border-t border-gray-100 pt-4">
-    <div id="pin-btn-{{ r.id }}"
-         hx-get="{% url 'places:toggle_pin' r.pk %}" 
-         hx-target="this" 
-         hx-swap="outerHTML">
-      {% include "places/_pin_button.html" with r=r pinned=pinned %}
-    </div>
+    <button
+      class="w-full sm:w-auto inline-flex items-center justify-center gap-2
+             px-4 py-2 rounded-xl font-semibold transition
+             bg-indigo-600 text-white hover:bg-indigo-700"
+      hx-get="{% url 'list_picker' r.id %}"
+      hx-target="#modal"
+      hx-swap="innerHTML">
+      Add to list
+    </button>
   </div>
 </div>
+
+<!-- Reviews section -->
+{% include "places/_reviews_section.html" with r=r reviews=reviews %}
 {% endblock %}

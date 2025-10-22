@@ -28,14 +28,29 @@ def home(request):
 
 def restaurant_detail(request, pk):
     r = get_object_or_404(Restaurant, pk=pk)
-    is_pinned = request.user.is_authenticated and Pin.objects.filter(
-        user=request.user, restaurant=r
-    ).exists()
-    reviews = Review.objects.filter(restaurant=r).select_related("user")[:20]
+
+    # Get reviews from current user and their friends (people they follow)
+    if request.user.is_authenticated:
+        # Get users that the current user follows
+        following_ids = list(
+            request.user.following.values_list('followee_id', flat=True)
+        )
+        # Include current user in the list
+        following_ids.append(request.user.id)
+
+        # Get reviews from current user and friends
+        reviews = Review.objects.filter(
+            restaurant=r,
+            user_id__in=following_ids
+        ).select_related("user", "user__profile").order_by("-created_at")
+    else:
+        # If not authenticated, show no reviews
+        reviews = Review.objects.none()
+
     return render(
         request,
         "places/restaurant_detail.html",
-        {"r": r, "pinned": is_pinned, "reviews": reviews},
+        {"r": r, "reviews": reviews},
     )
 
 
