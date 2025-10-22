@@ -28,14 +28,11 @@ def home(request):
 
 def restaurant_detail(request, pk):
     r = get_object_or_404(Restaurant, pk=pk)
-    is_pinned = request.user.is_authenticated and Pin.objects.filter(
-        user=request.user, restaurant=r
-    ).exists()
     reviews = Review.objects.filter(restaurant=r).select_related("user")[:20]
     return render(
         request,
         "places/restaurant_detail.html",
-        {"r": r, "pinned": is_pinned, "reviews": reviews},
+        {"r": r, "reviews": reviews},
     )
 
 
