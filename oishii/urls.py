@@ -19,6 +19,7 @@ urlpatterns = [
     path("r/<int:pk>/lists/<int:list_id>/toggle/", pviews.toggle_in_list, name="toggle_in_list"),
     path("lists/create/", pviews.create_list, name="create_list"),
     path("lists/<int:list_id>/", pviews.list_detail, name="list_detail"),
+    path("lists/<int:list_id>/edit/", pviews.edit_list, name="edit_list"),
     path("lists/<int:list_id>/delete/", pviews.delete_list, name="delete_list"),
     path("lists/<int:list_id>/pin/<int:pin_id>/delete/", pviews.delete_pin, name="delete_pin"),
     # social views

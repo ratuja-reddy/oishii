@@ -254,6 +254,47 @@ def delete_pin(request, list_id, pin_id):
     return redirect("list_detail", list_id=lst.id)
 
 @login_required
+def edit_list(request, list_id):
+    """
+    GET -> render small modal with edit form
+    POST -> update list for current user and HTMX-redirect to list detail
+    """
+    lst = get_object_or_404(List, pk=list_id, owner=request.user)
+
+    if request.method == "POST":
+        title = (request.POST.get("title") or "").strip()
+        is_public = (request.POST.get("is_public") == "on")
+
+        errors = {}
+        if not title:
+            errors["title"] = "Please enter a name."
+
+        # enforce uniqueness per user from your model Meta(unique_together)
+        # but allow keeping the same title for the current list
+        if not errors and List.objects.filter(owner=request.user, title=title).exclude(pk=lst.pk).exists():
+            errors["title"] = "You already have a list with this name."
+
+        if errors:
+            return render(request, "places/_list_edit_modal.html", {
+                "errors": errors,
+                "title_value": title,
+                "is_public_value": is_public,
+                "lst": lst,
+            })
+
+        lst.title = title
+        lst.is_public = is_public
+        lst.save()
+
+        # HTMX redirect so the page changes without reloading everything
+        resp = HttpResponse("")
+        resp["HX-Redirect"] = reverse("list_detail", args=[lst.id])
+        return resp
+
+    # GET -> show modal
+    return render(request, "places/_list_edit_modal.html", {"lst": lst})
+
+@login_required
 def delete_list(request, list_id):
     """Delete a custom list (not the default 'visited' or 'saved' lists)."""
     lst = get_object_or_404(List, pk=list_id, owner=request.user)
