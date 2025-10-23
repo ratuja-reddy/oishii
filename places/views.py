@@ -172,6 +172,29 @@ def review_create_for_restaurant(request, pk):
         {"form": form, "restaurant": restaurant, "active_tab": "review"},
     )
 
+
+@login_required
+def review_edit(request, pk):
+    """Edit an existing review."""
+    review = get_object_or_404(Review, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        form = ReviewForm(request.POST, instance=review, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Review updated!")
+            return redirect("feed")
+    else:
+        form = ReviewForm(instance=review, user=request.user)
+        # Lock the restaurant field since we're editing an existing review
+        form.fields["restaurant"].widget.attrs["disabled"] = True
+
+    return render(
+        request,
+        "places/review_edit.html",
+        {"form": form, "review": review, "restaurant": review.restaurant, "active_tab": "review"},
+    )
+
 # -------------------
 # LISTS
 # -------------------

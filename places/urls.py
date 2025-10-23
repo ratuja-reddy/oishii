@@ -9,4 +9,5 @@ urlpatterns = [
     path("r/<int:pk>/", views.restaurant_detail, name="restaurant_detail"),
     path("r/<int:pk>/pin/", views.toggle_pin, name="toggle_pin"),
     path("r/<int:pk>/review/", views.review_create_for_restaurant, name="review_for_restaurant"),
+    path("review/<int:pk>/edit/", views.review_edit, name="review_edit"),
 ]
