@@ -47,15 +47,25 @@
 <ul class="space-y-2">
   {% for rv in my_reviews %}
     <li class="bg-white rounded-xl p-4 shadow">
-      <div class="text-sm text-gray-500">{{ rv.created_at|date:"M j, H:i" }}</div>
-      <div class="font-semibold">{{ rv.restaurant.name }} — {{ rv.overall_rating }}★</div>
-      <div class="mt-1 text-xs text-gray-600 flex flex-wrap gap-2">
-        {% if rv.food %}<span class="px-2 py-0.5 rounded bg-gray-100">Food {{ rv.food }}★</span>{% endif %}
-        {% if rv.service %}<span class="px-2 py-0.5 rounded bg-gray-100">Service {{ rv.service }}★</span>{% endif %}
-        {% if rv.value %}<span class="px-2 py-0.5 rounded bg-gray-100">Value {{ rv.value }}★</span>{% endif %}
-        {% if rv.atmosphere %}<span class="px-2 py-0.5 rounded bg-gray-100">Atmosphere {{ rv.atmosphere }}★</span>{% endif %}
+      <div class="flex justify-between items-start">
+        <div class="flex-1">
+          <div class="text-sm text-gray-500">{{ rv.created_at|date:"M j, H:i" }}</div>
+          <div class="font-semibold">{{ rv.restaurant.name }} — {{ rv.overall_rating }}★</div>
+          <div class="mt-1 text-xs text-gray-600 flex flex-wrap gap-2">
+            {% if rv.food %}<span class="px-2 py-0.5 rounded bg-gray-100">Food {{ rv.food }}★</span>{% endif %}
+            {% if rv.service %}<span class="px-2 py-0.5 rounded bg-gray-100">Service {{ rv.service }}★</span>{% endif %}
+            {% if rv.value %}<span class="px-2 py-0.5 rounded bg-gray-100">Value {{ rv.value }}★</span>{% endif %}
+            {% if rv.atmosphere %}<span class="px-2 py-0.5 rounded bg-gray-100">Atmosphere {{ rv.atmosphere }}★</span>{% endif %}
+          </div>
+          {% if rv.text %}<p class="text-gray-700 mt-1">{{ rv.text }}</p>{% endif %}
+        </div>
+        <div class="ml-4">
+          <a class="text-sm font-medium text-gray-600 hover:text-gray-800 hover:underline"
+             href="{% url 'places:review_edit' rv.id %}">
+            Edit
+          </a>
+        </div>
       </div>
-      {% if rv.text %}<p class="text-gray-700 mt-1">{{ rv.text }}</p>{% endif %}
     </li>
   {% empty %}
     <li class="text-gray-600">No reviews yet.</li>

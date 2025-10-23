@@ -13,17 +13,13 @@ def on_review_saved(sender, instance: Review, created, **kwargs):
     user = instance.user
     r = instance.restaurant
 
-    # Ensure 'Visited' list exists and contains a Pin for this restaurant
+    # Ensure 'Visited' list exists
     visited, _ = List.objects.get_or_create(owner=user, title="Visited", defaults={"is_public": False})
-    Pin.objects.get_or_create(user=user, restaurant=r, defaults={"list": visited})
-    # If a Pin already exists with no list, attach it (optional)
-    try:
-        p = Pin.objects.get(user=user, restaurant=r)
-        if p.list is None:
-            p.list = visited
-            p.save(update_fields=["list"])
-    except Pin.DoesNotExist:
-        pass
+
+    # Check if there's already a Pin for this user+restaurant+visited_list combination
+    # If not, create one
+    if not Pin.objects.filter(user=user, restaurant=r, list=visited).exists():
+        Pin.objects.create(user=user, restaurant=r, list=visited)
 
     # Create or update the review activity
     from social.models import Activity  # local import to avoid circular deps
