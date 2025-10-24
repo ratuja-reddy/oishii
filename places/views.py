@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
@@ -192,9 +192,15 @@ def review_edit(request, pk):
     review = get_object_or_404(Review, pk=pk, user=request.user)
 
     if request.method == "POST":
-        form = ReviewForm(request.POST, instance=review, user=request.user)
+        form = ReviewForm(request.POST, request.FILES, instance=review, user=request.user)
         if form.is_valid():
             form.save()
+
+            # Handle new photo uploads
+            photos = request.FILES.getlist('photos')
+            for photo in photos:
+                Photo.objects.create(review=review, image=photo)
+
             messages.success(request, "Review updated!")
             return redirect("feed")
     else:
@@ -207,6 +213,18 @@ def review_edit(request, pk):
         "places/review_edit.html",
         {"form": form, "review": review, "restaurant": review.restaurant, "active_tab": "review"},
     )
+
+
+@login_required
+def photo_delete(request, pk):
+    """Delete a photo from a review."""
+    photo = get_object_or_404(Photo, pk=pk, review__user=request.user)
+
+    if request.method == "POST":
+        photo.delete()
+        return JsonResponse({"success": True})
+
+    return JsonResponse({"success": False, "error": "Invalid request method"})
 
 # -------------------
 # LISTS
