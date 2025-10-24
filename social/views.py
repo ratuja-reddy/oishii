@@ -175,7 +175,8 @@ def feed(request):
                 queryset=Comment.objects
                     .select_related("user", "user__profile")
                     .order_by("created_at")
-            )
+            ),
+            "review__photos"
         )
         .annotate(comment_count=Count("comments"))                         # 👈 add
         .order_by("-created_at")[:50]

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 from django.db import models
 
 
@@ -115,3 +116,23 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.user} → {self.restaurant} ({self.overall_rating}★)"
+
+
+class Photo(models.Model):
+    """Photos attached to reviews"""
+    review = models.ForeignKey(
+        Review, on_delete=models.CASCADE, related_name="photos"
+    )
+    image = models.ImageField(
+        upload_to="review_photos/%Y/%m/%d/",
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'webp'])],
+        help_text="Upload photos of your meal or the restaurant"
+    )
+    caption = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Photo for {self.review}"

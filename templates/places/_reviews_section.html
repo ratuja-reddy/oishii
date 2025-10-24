@@ -50,6 +50,22 @@
             <p class="text-gray-700 mb-3">{{ review.text }}</p>
           {% endif %}
 
+          <!-- Photos -->
+          {% if review.photos.all %}
+            <div class="mb-3">
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {% for photo in review.photos.all %}
+                  <div class="relative group">
+                    <img src="{{ photo.image.url }}" 
+                         alt="Review photo" 
+                         class="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                         onclick="openImageModal('{{ photo.image.url }}')">
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
           <!-- Sub-ratings -->
           {% if review.food or review.service or review.value or review.atmosphere %}
             <div class="flex flex-wrap gap-2 text-xs">
@@ -116,4 +132,31 @@
     </div>
   </div>
 {% endif %}
+
+<!-- Image Modal -->
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden flex items-center justify-center p-4" onclick="closeImageModal()">
+  <div class="max-w-4xl max-h-full">
+    <img id="modalImage" src="" alt="Review photo" class="max-w-full max-h-full object-contain rounded-lg">
+  </div>
+</div>
+
+<script>
+function openImageModal(imageUrl) {
+  document.getElementById('modalImage').src = imageUrl;
+  document.getElementById('imageModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+  document.getElementById('imageModal').classList.add('hidden');
+  document.body.style.overflow = 'auto';
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeImageModal();
+  }
+});
+</script>
 
