@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from .forms import ReviewForm
-from .models import List, Pin, Restaurant, Review
+from .models import List, Pin, Restaurant, Review, Photo
 
 
 def home(request):
@@ -43,7 +43,7 @@ def restaurant_detail(request, pk):
             restaurant=r,
             user_id__in=following_ids
         ).select_related("user", "user__profile").prefetch_related(
-            "activities__comments__user__profile"
+            "activities__comments__user__profile", "photos"
         ).order_by("-created_at")
     else:
         # If not authenticated, show no reviews
@@ -114,7 +114,7 @@ def discover(request):
 def review_tab(request):
     """Center tab: create a review and see recent reviews by the user."""
     if request.method == "POST":
-        form = ReviewForm(request.POST, user=request.user)
+        form = ReviewForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             # One review per user per restaurant
             review, _created = Review.objects.update_or_create(
@@ -129,6 +129,12 @@ def review_tab(request):
                     "text": form.cleaned_data.get("text", ""),
                 },
             )
+            
+            # Handle photo uploads
+            photos = request.FILES.getlist('photos')
+            for photo in photos:
+                Photo.objects.create(review=review, image=photo)
+            
             messages.success(request, "Review saved!")
             return redirect("review_tab")
     else:
@@ -137,6 +143,7 @@ def review_tab(request):
     my_reviews = (
         Review.objects.filter(user=request.user)
         .select_related("restaurant")
+        .prefetch_related("photos")
         .order_by("-created_at")[:10]
     )
     return render(
@@ -153,12 +160,18 @@ def review_create_for_restaurant(request, pk):
     instance = Review.objects.filter(user=request.user, restaurant=restaurant).first()
 
     if request.method == "POST":
-        form = ReviewForm(request.POST, instance=instance, user=request.user)
+        form = ReviewForm(request.POST, request.FILES, instance=instance, user=request.user)
         if form.is_valid():
             review = form.save(commit=False)
             review.user = request.user
             review.restaurant = restaurant
             review.save()
+            
+            # Handle photo uploads
+            photos = request.FILES.getlist('photos')
+            for photo in photos:
+                Photo.objects.create(review=review, image=photo)
+            
             messages.success(request, "Review saved!")
             return redirect("places:restaurant_detail", pk=restaurant.pk)
     else:
