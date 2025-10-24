@@ -13,9 +13,9 @@ def on_review_saved(sender, instance: Review, created, **kwargs):
     user = instance.user
     r = instance.restaurant
 
-    # Ensure 'Visited' list exists and contains a Pin for this restaurant
+    # Ensure 'Visited' list exists
     visited, _ = List.objects.get_or_create(owner=user, title="Visited", defaults={"is_public": False})
-    
+
     # Handle multiple pins for the same user-restaurant combination
     existing_pins = Pin.objects.filter(user=user, restaurant=r)
     if existing_pins.exists():

@@ -32,7 +32,7 @@ class ReviewForm(forms.ModelForm):
         validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'webp'])],
         help_text="Upload photos of your meal or the restaurant (optional)"
     )
-    
+
     class Meta:
         model = Review
         fields = ["restaurant", "overall_rating", "food", "service", "value", "atmosphere", "text"]

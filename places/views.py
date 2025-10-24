@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from .forms import ReviewForm
-from .models import List, Pin, Restaurant, Review, Photo
+from .models import List, Photo, Pin, Restaurant, Review
 
 
 def home(request):
@@ -129,12 +129,12 @@ def review_tab(request):
                     "text": form.cleaned_data.get("text", ""),
                 },
             )
-            
+
             # Handle photo uploads
             photos = request.FILES.getlist('photos')
             for photo in photos:
                 Photo.objects.create(review=review, image=photo)
-            
+
             messages.success(request, "Review saved!")
             return redirect("review_tab")
     else:
@@ -166,12 +166,12 @@ def review_create_for_restaurant(request, pk):
             review.user = request.user
             review.restaurant = restaurant
             review.save()
-            
+
             # Handle photo uploads
             photos = request.FILES.getlist('photos')
             for photo in photos:
                 Photo.objects.create(review=review, image=photo)
-            
+
             messages.success(request, "Review saved!")
             return redirect("places:restaurant_detail", pk=restaurant.pk)
     else:
@@ -183,6 +183,29 @@ def review_create_for_restaurant(request, pk):
         request,
         "places/review_form.html",
         {"form": form, "restaurant": restaurant, "active_tab": "review"},
+    )
+
+
+@login_required
+def review_edit(request, pk):
+    """Edit an existing review."""
+    review = get_object_or_404(Review, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        form = ReviewForm(request.POST, instance=review, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Review updated!")
+            return redirect("feed")
+    else:
+        form = ReviewForm(instance=review, user=request.user)
+        # Lock the restaurant field since we're editing an existing review
+        form.fields["restaurant"].widget.attrs["disabled"] = True
+
+    return render(
+        request,
+        "places/review_edit.html",
+        {"form": form, "review": review, "restaurant": review.restaurant, "active_tab": "review"},
     )
 
 # -------------------
