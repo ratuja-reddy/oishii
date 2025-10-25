@@ -148,10 +148,10 @@
           </svg>
         </button>
         <!-- Dropdown for editing cuisines -->
-        <div id="cuisines-dropdown" class="hidden absolute right-0 top-6 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-[80vh] overflow-hidden flex flex-col">
-          <div class="p-4 flex-1 flex flex-col">
+        <div id="cuisines-dropdown" class="hidden absolute right-0 top-6 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-[70vh] overflow-hidden flex flex-col">
+          <div class="p-4 flex-1 flex flex-col min-h-0">
             <h3 class="font-semibold mb-3">Edit Favorite Cuisines</h3>
-            <form method="post" action="{% url 'profile_me' %}" class="flex-1 flex flex-col">
+            <form method="post" action="{% url 'profile_me' %}" class="flex-1 flex flex-col min-h-0">
               {% csrf_token %}
               <div class="mb-3 flex-shrink-0">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -165,26 +165,26 @@
               </div>
               
               <!-- Cuisine list with checkboxes -->
-              <div id="cuisines-list" class="flex-1 overflow-y-auto border border-gray-200 rounded-lg mb-3">
+              <div id="cuisines-list" class="flex-1 overflow-y-auto border border-gray-200 rounded-lg mb-3 min-h-0" style="max-height: 200px;">
                 {% for value, label in cuisine_choices %}
-                  <label class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0">
+                  <label class="flex items-center p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0">
                     <input type="checkbox" name="favorite_cuisines" value="{{ value }}" 
                            {% if value in stats.favorite_cuisines %}checked{% endif %}
                            class="mr-3 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cuisines-checkbox">
                     <div class="flex-1 min-w-0">
-                      <div class="font-medium text-gray-900">{{ label }}</div>
+                      <div class="font-medium text-gray-900 text-sm">{{ label }}</div>
                     </div>
                   </label>
                 {% endfor %}
               </div>
               
               <div class="flex-shrink-0">
-                <p class="text-xs text-gray-500 mb-3">Search and select your favorite cuisines</p>
+                <p class="text-xs text-gray-500 mb-2">Search and select your favorite cuisines</p>
                 <div class="flex gap-2">
-                  <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                  <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm">
                     Save Changes
                   </button>
-                  <button type="button" onclick="toggleCuisinesDropdown()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                  <button type="button" onclick="toggleCuisinesDropdown()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
                     Cancel
                   </button>
                 </div>
@@ -222,10 +222,10 @@
           </svg>
         </button>
         <!-- Dropdown for editing spots -->
-        <div id="spots-dropdown" class="hidden absolute right-0 top-6 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-[80vh] overflow-hidden flex flex-col">
-          <div class="p-4 flex-1 flex flex-col">
+        <div id="spots-dropdown" class="hidden absolute right-0 top-6 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-[70vh] overflow-hidden flex flex-col">
+          <div class="p-4 flex-1 flex flex-col min-h-0">
             <h3 class="font-semibold mb-3">Edit Favorite Spots</h3>
-            <form method="post" action="{% url 'profile_me' %}" class="flex-1 flex flex-col">
+            <form method="post" action="{% url 'profile_me' %}" class="flex-1 flex flex-col min-h-0">
               {% csrf_token %}
               <div class="mb-3 flex-shrink-0">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -239,27 +239,27 @@
               </div>
               
               <!-- Restaurant list with checkboxes -->
-              <div id="spots-list" class="flex-1 overflow-y-auto border border-gray-200 rounded-lg mb-3">
+              <div id="spots-list" class="flex-1 overflow-y-auto border border-gray-200 rounded-lg mb-3 min-h-0" style="max-height: 250px;">
                 {% for restaurant in all_restaurants %}
-                  <label class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0">
+                  <label class="flex items-center p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0">
                     <input type="checkbox" name="favorite_spots" value="{{ restaurant.id }}" 
                            {% if restaurant in stats.favorite_spots %}checked{% endif %}
                            class="mr-3 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 spots-checkbox">
                     <div class="flex-1 min-w-0">
-                      <div class="font-medium text-gray-900">{{ restaurant.name }}</div>
-                      <div class="text-sm text-gray-500">{{ restaurant.cuisine|title }} • {{ restaurant.city }}</div>
+                      <div class="font-medium text-gray-900 text-sm">{{ restaurant.name }}</div>
+                      <div class="text-xs text-gray-500">{{ restaurant.cuisine|title }} • {{ restaurant.city }}</div>
                     </div>
                   </label>
                 {% endfor %}
               </div>
               
               <div class="flex-shrink-0">
-                <p class="text-xs text-gray-500 mb-3">Search and select your favorite spots</p>
+                <p class="text-xs text-gray-500 mb-2">Search and select your favorite spots</p>
                 <div class="flex gap-2">
-                  <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                  <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm">
                     Save Changes
                   </button>
-                  <button type="button" onclick="toggleSpotsDropdown()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                  <button type="button" onclick="toggleSpotsDropdown()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
                     Cancel
                   </button>
                 </div>
