@@ -2,13 +2,14 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+
 class Friend(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pending"),
         ("accepted", "Accepted"),
         ("rejected", "Rejected"),
     ]
-    
+
     requesting_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -28,25 +29,25 @@ class Friend(models.Model):
 
     def __str__(self):
         return f"{self.requesting_user} → {self.target_user} ({self.status})"
-    
+
     def accept(self):
         """Accept the friend request."""
         self.status = "accepted"
         self.save()
-    
+
     def reject(self):
         """Reject the friend request."""
         self.status = "rejected"
         self.save()
-    
+
     def is_accepted(self):
         """Check if the friend request is accepted."""
         return self.status == "accepted"
-    
+
     def is_pending(self):
         """Check if the friend request is pending."""
         return self.status == "pending"
-    
+
     def is_rejected(self):
         """Check if the friend request is rejected."""
         return self.status == "rejected"

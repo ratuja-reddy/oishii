@@ -1,11 +1,11 @@
+import os
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import models
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.decorators.http import require_http_methods
-import os
 
 from .forms import ReviewForm
 from .models import List, Photo, Pin, Restaurant, Review
@@ -102,7 +102,7 @@ def my_restaurants(request):
 
 def discover(request):
     search_query = request.GET.get('search', '').strip()
-    
+
     if search_query:
         # Search in name, cuisine, city, and address
         restaurants = Restaurant.objects.filter(
@@ -113,12 +113,12 @@ def discover(request):
         ).order_by("-id")[:24]
     else:
         restaurants = Restaurant.objects.order_by("-id")[:24]
-    
+
     return render(
         request,
         "places/discover.html",
         {
-            "restaurants": restaurants, 
+            "restaurants": restaurants,
             "active_tab": "discover",
             "search_query": search_query,
             "API_KEY": os.getenv("GOOGLE_MAPS_API_KEY")

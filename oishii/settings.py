@@ -2,9 +2,9 @@
 import os
 from pathlib import Path
 from urllib.parse import urlparse
-from dotenv import load_dotenv
 
 import dj_database_url
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -196,6 +196,13 @@ LOGGING = {
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "root": {"handlers": ["console"], "level": os.getenv("LOG_LEVEL", "INFO")},
 }
+
+# --------------------------------------------------------------------------------------
+# Authentication
+# --------------------------------------------------------------------------------------
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/"  # Redirect to feed page after login
+LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 # --------------------------------------------------------------------------------------
 # Default primary key type
