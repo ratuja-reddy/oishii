@@ -23,14 +23,14 @@
     <div class="flex gap-4 mt-2">
       <label class="flex items-center gap-2 cursor-pointer">
         <input type="radio" name="{{ form.would_go_again.name }}" value="True" 
-               {% if form.would_go_again.value == True %}checked{% endif %}
+               {% if form.would_go_again.value == True or form.would_go_again.value == 'True' %}checked{% endif %}
                class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
         <span class="text-lg">👍</span>
         <span class="text-sm text-gray-700">Yes</span>
       </label>
       <label class="flex items-center gap-2 cursor-pointer">
         <input type="radio" name="{{ form.would_go_again.name }}" value="False" 
-               {% if form.would_go_again.value == False %}checked{% endif %}
+               {% if form.would_go_again.value == False or form.would_go_again.value == 'False' %}checked{% endif %}
                class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
         <span class="text-lg">👎</span>
         <span class="text-sm text-gray-700">No</span>

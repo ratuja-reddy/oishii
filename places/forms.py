@@ -48,8 +48,9 @@ class ReviewForm(forms.ModelForm):
         help_text="Upload photos of your meal or the restaurant (optional)"
     )
 
-    would_go_again = forms.BooleanField(
-        widget=EmojiRadioSelect(choices=[(True, 'Yes'), (False, 'No')]),
+    would_go_again = forms.ChoiceField(
+        choices=[(True, 'Yes'), (False, 'No')],
+        widget=forms.RadioSelect(attrs={'class': 'flex gap-4'}),
         label="Would you go again?",
         required=True
     )
@@ -75,4 +76,17 @@ class ReviewForm(forms.ModelForm):
             self.fields[name].required = False
             self.fields[name].empty_label = "— (optional)"
         # Nice ordering for restaurants
-        self.fields["restaurant"].queryset = Restaurant.objects.order_by("name")
+        self.fields["restaurant"].queryset = Restaurant.objects.all().order_by("name")
+
+        # Convert boolean values to strings for the form
+        if self.instance and self.instance.pk:
+            if hasattr(self.instance, 'would_go_again'):
+                self.fields['would_go_again'].initial = str(self.instance.would_go_again)
+
+    def clean_would_go_again(self):
+        value = self.cleaned_data.get('would_go_again')
+        if value == 'True':
+            return True
+        elif value == 'False':
+            return False
+        return value
