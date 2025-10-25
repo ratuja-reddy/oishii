@@ -44,9 +44,35 @@ def profile_me(request):
     # If you registered List in places, Django will create me.list_set
     lists = getattr(me, "list_set", None).all().order_by("title") if hasattr(me, "list_set") else []
     
-    # Get recent reviews for Updates tab
+    # Get recent activities for Updates tab (like the main feed)
     from places.models import Review
-    recent_reviews = Review.objects.filter(user=me).select_related('restaurant').order_by('-created_at')[:10]
+    from django.db.models import Prefetch, Count
+    from .models import Like
+    
+    activities = (
+        Activity.objects
+        .select_related("user", "user__profile", "restaurant", "review")
+        .filter(user=me, type="review")
+        .prefetch_related(
+            Prefetch(
+                "comments",
+                queryset=Comment.objects
+                    .select_related("user", "user__profile")
+                    .order_by("created_at")
+            ),
+            "review__photos"
+        )
+        .annotate(comment_count=Count("comments"))
+        .order_by("-created_at")[:20]
+    )
+    
+    # Add liked_by_me annotation
+    liked_ids = set(
+        Like.objects.filter(user=me, activity__in=activities)
+        .values_list("activity_id", flat=True)
+    )
+    for a in activities:
+        a.liked_by_me = a.id in liked_ids
     
     # Get profile stats
     profile = getattr(me, 'profile', None)
@@ -65,7 +91,7 @@ def profile_me(request):
             "me": me, 
             "lists": lists, 
             "active_tab": "profile",
-            "recent_reviews": recent_reviews,
+            "activities": activities,
             "stats": stats,
         },
     )

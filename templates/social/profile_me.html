@@ -144,33 +144,212 @@
 
 <!-- Updates Tab Content -->
 <div id="updates-content" class="hidden">
-  <section class="bg-white rounded-xl border border-gray-200 p-4">
-    <h2 class="font-semibold mb-4">Recent Reviews</h2>
-    {% if recent_reviews %}
-      <div class="space-y-4">
-        {% for review in recent_reviews %}
-          <div class="border-b border-gray-100 pb-4 last:border-b-0">
-            <div class="flex items-start gap-3">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <h3 class="font-medium text-gray-900">{{ review.restaurant.name }}</h3>
-                  <div class="flex">
-                    {% for i in "12345" %}
-                      <span class="text-sm {% if forloop.counter <= review.overall_rating %}text-yellow-400{% else %}text-gray-300{% endif %}">★</span>
-                    {% endfor %}
-                  </div>
-                </div>
-                <p class="text-sm text-gray-600 mb-2">{{ review.text|truncatewords:20 }}</p>
-                <div class="text-xs text-gray-500">{{ review.created_at|date:"M j, Y" }}</div>
+  <div class="space-y-5">
+    {% if activities %}
+      {% for a in activities %}
+        <!-- Activity card -->
+        <article id="activity-{{ a.id }}" class="bg-white rounded-2xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition">
+          <!-- Header: avatar + name + time -->
+          <header class="flex items-center gap-3 mb-3">
+            {% if a.user.profile and a.user.profile.avatar %}
+              <a href="{% if a.user.id == request.user.id %}{% url 'profile_me' %}{% else %}{% url 'profile_public' a.user.username %}{% endif %}">
+                <img src="{{ a.user.profile.avatar.url }}"
+                     alt="{{ a.user.username }} avatar"
+                     class="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-400/70">
+              </a>
+            {% else %}
+              <a href="{% if a.user.id == request.user.id %}{% url 'profile_me' %}{% else %}{% url 'profile_public' a.user.username %}{% endif %}">
+                <div class="w-10 h-10 rounded-full bg-gray-200 ring-2 ring-indigo-200"></div>
+              </a>
+            {% endif %}
+            <div class="flex-1 leading-tight min-w-0">
+              <div class="font-semibold text-gray-900 truncate">
+                <a class="hover:underline" href="{% if a.user.id == request.user.id %}{% url 'profile_me' %}{% else %}{% url 'profile_public' a.user.username %}{% endif %}">
+                  {% if a.user.profile and a.user.profile.display_name %}
+                    {{ a.user.profile.display_name }}
+                  {% elif a.user.first_name or a.user.last_name %}
+                    {{ a.user.first_name }}{% if a.user.last_name %} {{ a.user.last_name }}{% endif %}
+                  {% else %}
+                    @{{ a.user.username }}
+                  {% endif %}
+                </a>
+              </div>
+              <div class="text-xs text-gray-500 truncate">
+                <a class="hover:underline" href="{% if a.user.id == request.user.id %}{% url 'profile_me' %}{% else %}{% url 'profile_public' a.user.username %}{% endif %}">
+                  @{{ a.user.username }}
+                </a>
+                {% if a.user.profile and a.user.profile.location %} • {{ a.user.profile.location }}{% endif %}
+                • {{ a.created_at|date:"M j, H:i" }}
               </div>
             </div>
+          </header>
+
+          <!-- Title row: restaurant + overall stars + edit icon -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <h2 class="text-lg font-bold text-gray-900">
+                <a class="hover:underline" href="{% url 'places:restaurant_detail' a.restaurant.id %}">
+                  {{ a.restaurant.name }}
+                </a>
+              </h2>
+              {% if a.review.overall_rating %}
+                {% include "components/stars.html" with rating=a.review.overall_rating size="md" %}
+              {% endif %}
+            </div>
+            
+            <!-- Edit icon for own reviews -->
+            {% if a.user.id == request.user.id and a.review %}
+              <a class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                 href="{% url 'places:review_edit' a.review.id %}"
+                 title="Edit review">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </a>
+            {% endif %}
           </div>
-        {% endfor %}
-      </div>
+
+          <!-- Review text -->
+          {% if a.review.text %}
+            <p class="mt-2 text-gray-800 leading-snug">{{ a.review.text }}</p>
+          {% endif %}
+
+          <!-- Photos -->
+          {% if a.review.photos.all %}
+            <div class="mt-3">
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {% for photo in a.review.photos.all %}
+                  <div class="relative group">
+                    <img src="{{ photo.image.url }}" 
+                         alt="Review photo" 
+                         class="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                         onclick="openImageModal('{{ photo.image.url }}')">
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Sub-ratings -->
+          {% if a.review.food or a.review.service or a.review.value or a.review.atmosphere or a.review.would_go_again is not None %}
+            <div class="mt-3 flex flex-wrap gap-2 text-xs">
+              {% if a.review.food %}
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                  <span>Food</span>
+                  {% include "components/stars.html" with rating=a.review.food size="sm" %}
+                </span>
+              {% endif %}
+              {% if a.review.service %}
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                  <span>Service</span>
+                  {% include "components/stars.html" with rating=a.review.service size="sm" %}
+                </span>
+              {% endif %}
+              {% if a.review.value %}
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                  <span>Value</span>
+                  {% include "components/stars.html" with rating=a.review.value size="sm" %}
+                </span>
+              {% endif %}
+              {% if a.review.atmosphere %}
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                  <span>Atmosphere</span>
+                  {% include "components/stars.html" with rating=a.review.atmosphere size="sm" %}
+                </span>
+              {% endif %}
+              {% if a.review.would_go_again is not None %}
+                {% if a.review.would_go_again %}
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700">
+                    <span>👍</span>
+                    <span>Would go again</span>
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-700">
+                    <span>👎</span>
+                    <span>Wouldn't go again</span>
+                  </span>
+                {% endif %}
+              {% endif %}
+            </div>
+          {% endif %}
+
+          <!-- Actions -->
+          <footer class="mt-4 flex items-center gap-4">
+            <div id="like-{{ a.id }}">
+              {% include "social/_like_button.html" with a=a %}
+            </div>
+
+            <div class="text-sm text-gray-600">💬 {{ a.comment_count|default:0 }}</div>
+
+            <button class="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
+                    hx-get="{% url 'list_picker' a.restaurant.id %}"
+                    hx-target="#modal"
+                    hx-swap="innerHTML">
+              💾 Save
+            </button>
+          </footer>
+
+          <!-- Comments -->
+          <div class="mt-4 space-y-3">
+            {% if a.comments.all %}
+              {% for c in a.comments.all %}
+                <div class="flex items-start gap-2">
+                  {% if c.user.profile and c.user.profile.avatar %}
+                    <img src="{{ c.user.profile.avatar.url }}"
+                         class="h-8 w-8 rounded-full object-cover flex-shrink-0" alt="">
+                  {% else %}
+                    <div class="h-8 w-8 rounded-full bg-gray-200 flex-shrink-0"></div>
+                  {% endif %}
+                  <div class="bg-gray-50 rounded-2xl px-3 py-2 text-sm max-w-full flex-1">
+                    <div class="flex items-center justify-between">
+                      <span class="font-medium">{{ c.user.username }}</span>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[11px] text-gray-400">{{ c.created_at|date:"M j, H:i" }}</span>
+                        {% include "social/_comment_like_button.html" with comment=c %}
+                      </div>
+                    </div>
+                    <div class="text-gray-800 break-words mt-1">{{ c.text }}</div>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="text-sm text-gray-400">No comments yet.</p>
+            {% endif %}
+          </div>
+
+          <!-- Comment form -->
+          <form method="post"
+                action="{% url 'add_comment' a.id %}"
+                class="mt-2 flex gap-2">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}#activity-{{ a.id }}">
+            <input type="text" name="text" placeholder="Add a comment..."
+                   class="flex-1 border rounded-full px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            <button type="submit"
+                    class="px-3 py-2 bg-indigo-600 text-white text-sm rounded-full hover:bg-indigo-700">
+              Post
+            </button>
+          </form>
+        </article>
+      {% endfor %}
     {% else %}
-      <p class="text-gray-500 text-sm">No reviews yet.</p>
+      <!-- Empty state -->
+      <div class="text-center py-16">
+        <div class="text-gray-900 font-semibold text-lg">No reviews yet</div>
+        <p class="text-gray-600 mt-1">Start reviewing places to see your activity here.</p>
+        <div class="mt-4 flex items-center justify-center gap-3">
+          <a href="{% url 'discover' %}"
+             class="px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-800 hover:bg-gray-50">
+            Discover places
+          </a>
+          <a href="{% url 'review_tab' %}"
+             class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white">
+            Write a review
+          </a>
+        </div>
+      </div>
     {% endif %}
-  </section>
+  </div>
 </div>
 
 <script>
@@ -191,6 +370,49 @@ document.getElementById('updates-tab').addEventListener('click', function() {
   this.classList.remove('border-transparent', 'text-gray-500');
   document.getElementById('about-tab').classList.add('border-transparent', 'text-gray-500');
   document.getElementById('about-tab').classList.remove('border-indigo-500', 'text-gray-900');
+});
+
+// Image Modal Functions
+function openImageModal(imageUrl) {
+  // Create modal if it doesn't exist
+  let modal = document.getElementById('imageModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'imageModal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-75 z-50 hidden flex items-center justify-center p-4';
+    modal.onclick = closeImageModal;
+    
+    const modalContent = document.createElement('div');
+    modalContent.className = 'max-w-4xl max-h-full';
+    
+    const img = document.createElement('img');
+    img.id = 'modalImage';
+    img.className = 'max-w-full max-h-full object-contain rounded-lg';
+    img.alt = 'Review photo';
+    
+    modalContent.appendChild(img);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+  }
+  
+  document.getElementById('modalImage').src = imageUrl;
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+  const modal = document.getElementById('imageModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+  }
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeImageModal();
+  }
 });
 </script>
 
