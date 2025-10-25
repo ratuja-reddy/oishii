@@ -50,6 +50,28 @@
       {% if form.overall_rating.errors %}<p class="text-sm text-red-600 mt-1">{{ form.overall_rating.errors|join:", " }}</p>{% endif %}
     </div>
 
+    <!-- Would go again: thumbs up/down -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Would you go again?</label>
+      <div class="flex gap-4">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="radio" name="{{ form.would_go_again.name }}" value="True" 
+                 {% if form.would_go_again.value == True %}checked{% endif %}
+                 class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+          <span class="text-lg">👍</span>
+          <span class="text-sm text-gray-700">Yes</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="radio" name="{{ form.would_go_again.name }}" value="False" 
+                 {% if form.would_go_again.value == False %}checked{% endif %}
+                 class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+          <span class="text-lg">👎</span>
+          <span class="text-sm text-gray-700">No</span>
+        </label>
+      </div>
+      {% if form.would_go_again.errors %}<p class="text-sm text-red-600 mt-1">{{ form.would_go_again.errors|join:", " }}</p>{% endif %}
+    </div>
+
     <!-- Sub-ratings: segmented pills 1–5 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
       {% for field,label in

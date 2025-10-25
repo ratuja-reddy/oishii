@@ -111,7 +111,7 @@
       {% endif %}
 
       <!-- Sub-ratings -->
-      {% if a.review.food or a.review.service or a.review.value or a.review.atmosphere %}
+      {% if a.review.food or a.review.service or a.review.value or a.review.atmosphere or a.review.would_go_again is not None %}
         <div class="mt-3 flex flex-wrap gap-2 text-xs">
           {% if a.review.food %}
             <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
@@ -137,6 +137,19 @@
               {% include "components/stars.html" with rating=a.review.atmosphere size="sm" %}
             </span>
           {% endif %}
+          {% if a.review.would_go_again is not None %}
+            {% if a.review.would_go_again %}
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700">
+                <span>👍</span>
+                <span>Would go again</span>
+              </span>
+            {% else %}
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-700">
+                <span>👎</span>
+                <span>Wouldn't go again</span>
+              </span>
+            {% endif %}
+          {% endif %}
         </div>
       {% endif %}
 
@@ -148,10 +161,12 @@
 
         <div class="text-sm text-gray-600">💬 {{ a.comment_count|default:0 }}</div>
 
-        <a class="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
-           href="{% url 'places:restaurant_detail' a.restaurant.id %}">
-          See restaurant
-        </a>
+        <button class="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
+                hx-get="{% url 'list_picker' a.restaurant.id %}"
+                hx-target="#modal"
+                hx-swap="innerHTML">
+          💾 Save
+        </button>
       </footer>
 
       <!-- Comments -->

@@ -26,6 +26,14 @@
           evt.detail.headers['X-CSRFToken'] = csrftoken;
         }
       });
+      
+      // Handle list updates by refreshing the page
+      document.body.addEventListener('listUpdated', function (evt) {
+        // Close the modal
+        document.getElementById('modal').innerHTML = '';
+        // Refresh the current page to show updated list names
+        window.location.reload();
+      });
     });
   </script>
 </head>

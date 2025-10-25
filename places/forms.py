@@ -22,6 +22,21 @@ class MultipleFileField(forms.FileField):
         return result
 
 
+class EmojiRadioSelect(forms.RadioSelect):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.attrs.update({'class': 'flex gap-4'})
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        # Add emoji to the label
+        if value == 'True':
+            option['label'] = f'👍 {label}'
+        elif value == 'False':
+            option['label'] = f'👎 {label}'
+        return option
+
+
 class ReviewForm(forms.ModelForm):
     photos = MultipleFileField(
         widget=MultipleFileInput(attrs={
@@ -33,9 +48,16 @@ class ReviewForm(forms.ModelForm):
         help_text="Upload photos of your meal or the restaurant (optional)"
     )
 
+    would_go_again = forms.ChoiceField(
+        choices=[(True, 'Yes'), (False, 'No')],
+        widget=forms.RadioSelect(attrs={'class': 'flex gap-4'}),
+        label="Would you go again?",
+        required=True
+    )
+
     class Meta:
         model = Review
-        fields = ["restaurant", "overall_rating", "food", "service", "value", "atmosphere", "text"]
+        fields = ["restaurant", "overall_rating", "would_go_again", "food", "service", "value", "atmosphere", "text"]
         widgets = {
             "restaurant": forms.Select(attrs={"class": "w-full border rounded-xl px-3 py-2"}),
             "overall_rating": forms.Select(attrs={"class": "w-full border rounded-xl px-3 py-2"}),
@@ -54,4 +76,17 @@ class ReviewForm(forms.ModelForm):
             self.fields[name].required = False
             self.fields[name].empty_label = "— (optional)"
         # Nice ordering for restaurants
-        self.fields["restaurant"].queryset = Restaurant.objects.order_by("name")
+        self.fields["restaurant"].queryset = Restaurant.objects.all().order_by("name")
+
+        # Convert boolean values to strings for the form
+        if self.instance and self.instance.pk:
+            if hasattr(self.instance, 'would_go_again'):
+                self.fields['would_go_again'].initial = str(self.instance.would_go_again)
+
+    def clean_would_go_again(self):
+        value = self.cleaned_data.get('would_go_again')
+        if value == 'True':
+            return True
+        elif value == 'False':
+            return False
+        return value

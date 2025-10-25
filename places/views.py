@@ -1,11 +1,11 @@
+import os
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import models
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.decorators.http import require_http_methods
-import os
 
 from .forms import ReviewForm
 from .models import List, Photo, Pin, Restaurant, Review
@@ -102,7 +102,7 @@ def my_restaurants(request):
 
 def discover(request):
     search_query = request.GET.get('search', '').strip()
-    
+
     if search_query:
         # Search in name, cuisine, city, and address
         restaurants = Restaurant.objects.filter(
@@ -113,12 +113,12 @@ def discover(request):
         ).order_by("-id")[:24]
     else:
         restaurants = Restaurant.objects.order_by("-id")[:24]
-    
+
     return render(
         request,
         "places/discover.html",
         {
-            "restaurants": restaurants, 
+            "restaurants": restaurants,
             "active_tab": "discover",
             "search_query": search_query,
             "API_KEY": os.getenv("GOOGLE_MAPS_API_KEY")
@@ -294,18 +294,43 @@ def create_list(request):
             errors["title"] = "You already have a list with this name."
 
         if errors:
-            return render(request, "places/_list_create_modal.html", {
-                "errors": errors,
-                "title_value": title,
-                "is_public_value": is_public,
-            })
+            # Check if this is being called from the list picker modal
+            restaurant_id = request.POST.get("restaurant_id")
+            if restaurant_id:
+                # If called from list picker, show errors in the list picker context
+                r = get_object_or_404(Restaurant, pk=restaurant_id)
+                lists = List.objects.filter(owner=request.user).order_by("title").prefetch_related("pins")
+                present = set(Pin.objects.filter(list__in=lists, restaurant=r).values_list("list_id", flat=True))
+                return render(request, "places/_list_picker.html", {
+                    "r": r,
+                    "lists": lists,
+                    "present": present,
+                    "create_errors": errors,
+                    "create_title_value": title,
+                    "create_is_public_value": is_public,
+                })
+            else:
+                return render(request, "places/_list_create_modal.html", {
+                    "errors": errors,
+                    "title_value": title,
+                    "is_public_value": is_public,
+                })
 
         lst = List.objects.create(owner=request.user, title=title, is_public=is_public)
 
-        # HTMX redirect so the page changes without reloading everything
-        resp = HttpResponse("")
-        resp["HX-Redirect"] = reverse("list_detail", args=[lst.id])
-        return resp
+        # Check if this is being called from the list picker modal
+        restaurant_id = request.POST.get("restaurant_id")
+        if restaurant_id:
+            # If called from list picker, refresh the list picker instead of redirecting
+            r = get_object_or_404(Restaurant, pk=restaurant_id)
+            lists = List.objects.filter(owner=request.user).order_by("title").prefetch_related("pins")
+            present = set(Pin.objects.filter(list__in=lists, restaurant=r).values_list("list_id", flat=True))
+            return render(request, "places/_list_picker.html", {"r": r, "lists": lists, "present": present})
+        else:
+            # HTMX redirect so the page changes without reloading everything
+            resp = HttpResponse("")
+            resp["HX-Redirect"] = reverse("list_detail", args=[lst.id])
+            return resp
 
     # GET -> show modal
     return render(request, "places/_list_create_modal.html")
@@ -362,9 +387,9 @@ def edit_list(request, list_id):
         lst.is_public = is_public
         lst.save()
 
-        # HTMX redirect so the page changes without reloading everything
+        # Close the modal and refresh the list item
         resp = HttpResponse("")
-        resp["HX-Redirect"] = reverse("list_detail", args=[lst.id])
+        resp["HX-Trigger"] = "listUpdated"
         return resp
 
     # GET -> show modal

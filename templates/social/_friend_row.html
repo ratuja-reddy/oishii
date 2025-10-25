@@ -1,58 +1,62 @@
 <li class="flex items-center gap-4 px-4 py-4">
-  {% if person.profile and person.profile.avatar %}
-    <img src="{{ person.profile.avatar.url }}"
-         alt="{{ person.username }} avatar"
-         class="h-12 w-12 rounded-full object-cover ring-1 ring-gray-200 shadow-sm">
-  {% else %}
-    <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500">
-      {{ person.username|first|upper }}
-    </div>
-  {% endif %}
+  <a href="{% url 'profile_public' person.username %}" class="flex items-center gap-4 flex-1 min-w-0 hover:bg-gray-50 rounded-lg -mx-4 px-4 py-4 transition-colors">
+    {% if person.profile and person.profile.avatar %}
+      <img src="{{ person.profile.avatar.url }}"
+           alt="{{ person.username }} avatar"
+           class="h-12 w-12 rounded-full object-cover ring-1 ring-gray-200 shadow-sm">
+    {% else %}
+      <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500">
+        {{ person.username|first|upper }}
+      </div>
+    {% endif %}
 
-  <div class="flex-1 min-w-0">
-    <!-- Name -->
-    <div class="font-medium text-gray-900 truncate">
-      {% if person.profile and person.profile.display_name %}
-        {{ person.profile.display_name }}
-      {% elif person.first_name or person.last_name %}
-        {{ person.first_name }}{% if person.last_name %} {{ person.last_name }}{% endif %}
-      {% else %}
+    <div class="flex-1 min-w-0">
+      <!-- Name -->
+      <div class="font-medium text-gray-900 truncate">
+        {% if person.profile and person.profile.display_name %}
+          {{ person.profile.display_name }}
+        {% elif person.first_name or person.last_name %}
+          {{ person.first_name }}{% if person.last_name %} {{ person.last_name }}{% endif %}
+        {% else %}
+          @{{ person.username }}
+        {% endif %}
+      </div>
+
+      <!-- Username + location -->
+      <div class="text-sm text-gray-500 truncate">
         @{{ person.username }}
-      {% endif %}
-    </div>
+        {% if person.profile and person.profile.location %}
+          • {{ person.profile.location }}
+        {% endif %}
+      </div>
 
-    <!-- Username + location -->
-    <div class="text-sm text-gray-500 truncate">
-      @{{ person.username }}
-      {% if person.profile and person.profile.location %}
-        • {{ person.profile.location }}
-      {% endif %}
+      <!-- Stats -->
+      <div class="text-xs text-gray-600 mt-1">
+        {{ person.restaurants_count|default:0 }} restaurants
+        • {{ person.following_count|default:0 }} following
+        • {{ person.followers_count|default:0 }} followers
+      </div>
     </div>
-
-    <!-- Stats -->
-    <div class="text-xs text-gray-600 mt-1">
-      {{ person.restaurants_count|default:0 }} restaurants
-      • {{ person.following_count|default:0 }} following
-      • {{ person.followers_count|default:0 }} followers
-    </div>
-  </div>
+  </a>
 
   {% if request.user.id != person.id %}
-    <div class="ml-auto">
+    <div class="ml-auto flex-shrink-0">
       {% if is_received_request %}
         <!-- Friend request received - show accept/reject -->
         <div class="flex gap-2">
           <form method="post" action="{% url 'accept_friend_request' person.id %}" class="inline">
             {% csrf_token %}
             <button type="submit"
-                    class="px-3 py-1 rounded-full text-sm border text-green-700 border-green-300 hover:bg-green-50">
+                    class="px-3 py-1 rounded-full text-sm border text-green-700 border-green-300 hover:bg-green-50"
+                    onclick="event.stopPropagation()">
               ✅
             </button>
           </form>
           <form method="post" action="{% url 'reject_friend_request' person.id %}" class="inline">
             {% csrf_token %}
             <button type="submit"
-                    class="px-3 py-1 rounded-full text-sm border text-red-700 border-red-300 hover:bg-red-50">
+                    class="px-3 py-1 rounded-full text-sm border text-red-700 border-red-300 hover:bg-red-50"
+                    onclick="event.stopPropagation()">
               ❌
             </button>
           </form>
@@ -60,15 +64,19 @@
       {% elif is_accepted %}
         <!-- Accepted friend - show delete -->
         <button type="button"
-                onclick="confirmDeleteFriend('{{ person.username }}', '{% url 'delete_friend' person.id %}')"
-                class="">
+                onclick="event.stopPropagation(); confirmDeleteFriend(this.dataset.username, this.dataset.deleteUrl)"
+                data-username="{{ person.username }}"
+                data-delete-url="{% url 'delete_friend' person.id %}"
+                class="px-3 py-1 rounded-full text-sm border text-red-700 border-red-300 hover:bg-red-50">
           ❌
         </button>
       {% else %}
         <!-- Pending request - show cancel -->
         <button type="button"
-                onclick="confirmCancelRequest('{{ person.username }}', '{% url 'cancel_friend_request' person.id %}')"
-                class="">
+                onclick="event.stopPropagation(); confirmCancelRequest(this.dataset.username, this.dataset.cancelUrl)"
+                data-username="{{ person.username }}"
+                data-cancel-url="{% url 'cancel_friend_request' person.id %}"
+                class="px-3 py-1 rounded-full text-sm border text-gray-700 border-gray-300 hover:bg-gray-50">
           🚫
         </button>
       {% endif %}

@@ -9,13 +9,11 @@
   
       <ul class="divide-y divide-gray-100">
         {% for lst in lists %}
-          <li id="row-{{ lst.id }}">
-            {% if lst.id in present %}
-              {% include "places/_list_picker_row.html" with lst=lst r=r is_in=True %}
-            {% else %}
-              {% include "places/_list_picker_row.html" with lst=lst r=r is_in=False %}
-            {% endif %}
-          </li>
+          {% if lst.id in present %}
+            {% include "places/_list_picker_row.html" with lst=lst r=r is_in=True %}
+          {% else %}
+            {% include "places/_list_picker_row.html" with lst=lst r=r is_in=False %}
+          {% endif %}
         {% empty %}
           <li class="py-3 text-gray-500 text-sm">No lists yet.</li>
         {% endfor %}
@@ -27,9 +25,15 @@
             hx-swap="innerHTML">
         {% csrf_token %}
         <input type="hidden" name="restaurant_id" value="{{ r.id }}">
-        <input name="title" placeholder="New list name…" class="flex-1 border rounded-xl px-3 py-2">
+        <input name="title" 
+               placeholder="New list name…" 
+               value="{{ create_title_value|default:'' }}"
+               class="flex-1 border rounded-xl px-3 py-2 {% if create_errors.title %}border-red-500{% endif %}">
         <button class="px-3 py-2 rounded-xl bg-gray-900 text-white">Create</button>
       </form>
+      {% if create_errors.title %}
+        <p class="text-sm text-red-600 mt-1">{{ create_errors.title }}</p>
+      {% endif %}
     </div>
   </div>
   
