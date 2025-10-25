@@ -6,21 +6,15 @@
     <h1 class="font-black tracking-wide text-gray-900" style="font-family: 'Acid Grotesk', 'Acid Grotesque', 'Helvetica Neue', sans-serif; letter-spacing: 0.1em; font-size: 2rem; line-height: 1;">oishii</h1>
     <!-- Notification bell -->
     <div class="relative">
-      <button id="notification-bell" class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors relative">
+      <a href="{% url 'notifications' %}" id="notification-bell" class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors relative">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
         </svg>
-      </button>
-      
-      <!-- Notification dropdown -->
-      <div id="notification-dropdown" class="absolute right-0 mt-2 w-80 sm:w-96 md:w-[28rem] bg-white rounded-lg shadow-lg border border-gray-200 hidden z-50">
-        <div class="p-4 border-b border-gray-200">
-          <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
-        </div>
-        <div id="notification-content" class="max-h-96 overflow-y-auto">
-          <!-- Notifications will be loaded here -->
-        </div>
-      </div>
+        <!-- Notification badge -->
+        <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">
+          <span id="notification-count">0</span>
+        </span>
+      </a>
     </div>
   </div>
 </header>
@@ -237,8 +231,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const notificationBell = document.getElementById('notification-bell');
-  const notificationDropdown = document.getElementById('notification-dropdown');
-  const notificationContent = document.getElementById('notification-content');
+  const notificationBadge = document.getElementById('notification-badge');
+  const notificationCount = document.getElementById('notification-count');
 
   // Check for unread notifications on page load
   function checkNotifications() {
@@ -246,43 +240,20 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(response => response.json())
       .then(data => {
         if (data.count > 0) {
+          // Show badge with count
+          notificationBadge.classList.remove('hidden');
+          notificationCount.textContent = data.count;
           notificationBell.classList.add('text-indigo-600');
           notificationBell.classList.remove('text-gray-600');
         } else {
+          // Hide badge
+          notificationBadge.classList.add('hidden');
           notificationBell.classList.remove('text-indigo-600');
           notificationBell.classList.add('text-gray-600');
         }
       })
       .catch(error => console.error('Error checking notifications:', error));
   }
-
-  // Load notifications
-  function loadNotifications() {
-    fetch('{% url "notifications" %}')
-      .then(response => response.text())
-      .then(html => {
-        notificationContent.innerHTML = html;
-      })
-      .catch(error => console.error('Error loading notifications:', error));
-  }
-
-  // Toggle notification dropdown
-  notificationBell.addEventListener('click', function(e) {
-    e.stopPropagation();
-    if (notificationDropdown.classList.contains('hidden')) {
-      notificationDropdown.classList.remove('hidden');
-      loadNotifications();
-    } else {
-      notificationDropdown.classList.add('hidden');
-    }
-  });
-
-  // Close dropdown when clicking outside
-  document.addEventListener('click', function(e) {
-    if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
-      notificationDropdown.classList.add('hidden');
-    }
-  });
 
   // Check notifications on page load
   checkNotifications();

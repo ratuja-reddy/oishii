@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Notification Centre{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+      <a href="{% url 'feed' %}" class="text-gray-600 hover:text-gray-800">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </a>
+      <h1 class="text-2xl font-bold">Notification Centre</h1>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex border-b border-gray-200 mb-6">
+    <button id="notifications-tab" class="px-4 py-2 text-sm font-medium text-indigo-600 border-b-2 border-indigo-500">
+      Notifications
+    </button>
+    <button id="requests-tab" class="px-4 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 flex items-center gap-2">
+      Requests
+      {% if requests_count > 0 %}
+        <span class="bg-orange-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+          {{ requests_count }}
+        </span>
+      {% endif %}
+    </button>
+  </div>
+
+  <!-- Notifications Tab Content -->
+  <div id="notifications-content">
+    {% if notifications %}
+      <div class="space-y-4">
+        {% for notification in notifications %}
+          <div class="bg-white rounded-lg border border-gray-200 p-4 hover:bg-gray-50 transition-colors cursor-pointer {% if not notification.is_read %}border-l-4 border-l-indigo-500{% endif %}" 
+               onclick="handleNotificationClick({{ notification.id }}, '{% url 'places:restaurant_detail' notification.activity.restaurant.id %}#activity-{{ notification.activity.id }}')">
+            <div class="flex items-start gap-3">
+              <!-- Avatar -->
+              <div class="flex-shrink-0">
+                <a href="{% url 'profile_public' notification.comment.user.username %}" 
+                   class="block" 
+                   onclick="event.stopPropagation()">
+                  {% if notification.comment.user.profile and notification.comment.user.profile.avatar %}
+                    <img src="{{ notification.comment.user.profile.avatar.url }}" alt="{{ notification.comment.user.username }} avatar"
+                         class="h-10 w-10 rounded-full object-cover ring-1 ring-white shadow-sm hover:ring-2 hover:ring-indigo-300 transition-all">
+                  {% else %}
+                    <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500 hover:bg-gray-300 transition-colors">
+                      {{ notification.comment.user.username|first|upper }}
+                    </div>
+                  {% endif %}
+                </a>
+              </div>
+              
+              <!-- Content -->
+              <div class="flex-1 min-w-0">
+                <div class="text-sm text-gray-900">
+                  <a href="{% url 'profile_public' notification.comment.user.username %}" 
+                     class="font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
+                     onclick="event.stopPropagation()">
+                    {{ notification.comment.user.username }}
+                  </a> commented on your review of 
+                  <a href="{% url 'places:restaurant_detail' notification.activity.restaurant.id %}" 
+                     class="text-indigo-600 hover:text-indigo-800 hover:underline"
+                     onclick="event.stopPropagation()">
+                    {{ notification.activity.restaurant.name }}
+                  </a>
+                </div>
+                
+                {% if notification.activity and notification.activity.review and notification.activity.review.text %}
+                  <div class="mt-2 text-sm text-gray-600">
+                    "{{ notification.activity.review.text|truncatechars:100 }}"
+                  </div>
+                {% endif %}
+                
+                <div class="mt-2 text-xs text-gray-500">
+                  {{ notification.created_at|timesince }} ago
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5-5-5h5v-5a7.5 7.5 0 1 0-15 0v5"></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No notifications</h3>
+        <p class="mt-1 text-sm text-gray-500">You're all caught up!</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Requests Tab Content -->
+  <div id="requests-content" class="hidden">
+    {% include "social/_requests_content.html" %}
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-xl z-[9999] hidden">
+  <span id="toast-message">Friend Request Approved</span>
+</div>
+
+<script>
+// Tab switching functionality
+document.getElementById('notifications-tab').addEventListener('click', function() {
+  // Switch to notifications tab
+  document.getElementById('notifications-content').classList.remove('hidden');
+  document.getElementById('requests-content').classList.add('hidden');
+  
+  // Update tab styles
+  this.classList.add('text-indigo-600', 'border-indigo-500');
+  this.classList.remove('text-gray-500', 'border-transparent');
+  document.getElementById('requests-tab').classList.add('text-gray-500', 'border-transparent');
+  document.getElementById('requests-tab').classList.remove('text-indigo-600', 'border-indigo-500');
+});
+
+document.getElementById('requests-tab').addEventListener('click', function() {
+  // Switch to requests tab
+  document.getElementById('requests-content').classList.remove('hidden');
+  document.getElementById('notifications-content').classList.add('hidden');
+  
+  // Update tab styles
+  this.classList.add('text-indigo-600', 'border-indigo-500');
+  this.classList.remove('text-gray-500', 'border-transparent');
+  document.getElementById('notifications-tab').classList.add('text-gray-500', 'border-transparent');
+  document.getElementById('notifications-tab').classList.remove('text-indigo-600', 'border-indigo-500');
+});
+
+// Toast notification function
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  const toastMessage = document.getElementById('toast-message');
+  
+  toastMessage.textContent = message;
+  toast.classList.remove('hidden');
+  
+  // Auto hide after 3 seconds
+  setTimeout(() => {
+    toast.classList.add('hidden');
+  }, 3000);
+}
+
+// Listen for HTMX trigger events
+document.addEventListener('showToast', function(event) {
+  showToast('Friend Request Approved');
+});
+
+document.addEventListener('updateNotificationCount', function(event) {
+  updateNotificationCount();
+});
+
+// Notifications are automatically marked as read when the page loads (server-side)
+
+// Handle notification click - just redirect, don't mark as read
+function handleNotificationClick(notificationId, redirectUrl) {
+  // Just redirect to the review
+  window.location.href = redirectUrl;
+}
+
+// Mark notification as read and update count
+function markNotificationRead(notificationId) {
+  fetch(`/notifications/${notificationId}/read/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      'Content-Type': 'application/json',
+    },
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'success') {
+      // Update the notification count in the bell
+      updateNotificationCount();
+    }
+  })
+  .catch(error => console.error('Error marking notification as read:', error));
+}
+
+// Update notification count in the bell
+function updateNotificationCount() {
+  fetch('/notifications/count/')
+    .then(response => response.json())
+    .then(data => {
+      console.log('Updated notification count:', data.count);
+      const notificationBadge = document.getElementById('notification-badge');
+      const notificationCount = document.getElementById('notification-count');
+      const notificationBell = document.getElementById('notification-bell');
+      
+      // Only update if elements exist (they're on the feed page, not notifications page)
+      if (notificationBadge && notificationCount && notificationBell) {
+        if (data.count > 0) {
+          notificationBadge.classList.remove('hidden');
+          notificationCount.textContent = data.count;
+          notificationBell.classList.add('text-indigo-600');
+          notificationBell.classList.remove('text-gray-600');
+        } else {
+          notificationBadge.classList.add('hidden');
+          notificationBell.classList.remove('text-indigo-600');
+          notificationBell.classList.add('text-gray-600');
+        }
+      }
+    })
+    .catch(error => console.error('Error updating notification count:', error));
+}
+</script>
+
+{% endblock %}

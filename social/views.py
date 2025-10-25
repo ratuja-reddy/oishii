@@ -405,9 +405,11 @@ def mark_notification_read(request, notification_id):
 
 @login_required
 def notification_count(request):
-    """Get count of unread notifications."""
-    count = request.user.notifications.filter(is_read=False).count()
+    """Get count of unread notifications (not friend requests)."""
+    # Only count actual notifications, not friend requests
+    count = Notification.objects.filter(user=request.user, is_read=False).count()
     return JsonResponse({"count": count})
+
 
 # ---------- Follow (HTMX) ----------
 
@@ -509,6 +511,26 @@ def accept_friend_request(request, user_id: int):
     if friendship:
         friendship.accept()
 
+    # If HTMX request, return updated requests content
+    if request.headers.get('HX-Request'):
+        # Get updated friend requests
+        friend_requests = Friend.objects.filter(
+            target_user=request.user, status='pending'
+        ).select_related('requesting_user', 'requesting_user__profile').order_by('-created_at')
+        
+        pending_requests = Friend.objects.filter(
+            requesting_user=request.user, status='pending'
+        ).select_related('target_user', 'target_user__profile').order_by('-created_at')
+        
+        context = {
+            'friend_requests': friend_requests,
+            'pending_requests': pending_requests,
+        }
+        
+        response = render(request, "social/_requests_content.html", context)
+        response['HX-Trigger'] = 'showToast,updateNotificationCount'
+        return response
+    
     return redirect('friends')
 
 
@@ -533,6 +555,26 @@ def reject_friend_request(request, user_id: int):
     if friendship:
         friendship.reject()
 
+    # If HTMX request, return updated requests content
+    if request.headers.get('HX-Request'):
+        # Get updated friend requests
+        friend_requests = Friend.objects.filter(
+            target_user=request.user, status='pending'
+        ).select_related('requesting_user', 'requesting_user__profile').order_by('-created_at')
+        
+        pending_requests = Friend.objects.filter(
+            requesting_user=request.user, status='pending'
+        ).select_related('target_user', 'target_user__profile').order_by('-created_at')
+        
+        context = {
+            'friend_requests': friend_requests,
+            'pending_requests': pending_requests,
+        }
+        
+        response = render(request, "social/_requests_content.html", context)
+        response['HX-Trigger'] = 'updateNotificationCount'
+        return response
+    
     return redirect('friends')
 
 
@@ -647,6 +689,43 @@ def find_friends_search(request):
         "social/_people_results.html",
         {"users": users, "following_ids": following_ids},
     )
+
+@login_required
+def notifications(request):
+    """Dedicated notifications page with tabs for Notifications and Requests"""
+    me = request.user
+    
+    # Mark all notifications as read when user visits the notifications page
+    Notification.objects.filter(user=me, is_read=False).update(is_read=True)
+    
+    # Get all notifications for the user
+    notifications = (
+        Notification.objects
+        .filter(user=me)
+        .select_related('comment', 'comment__user', 'comment__user__profile', 'activity', 'activity__restaurant', 'activity__review')
+        .order_by('-created_at')
+    )
+    
+    # Get friend requests (for the Requests tab)
+    friend_requests = Friend.objects.filter(
+        target_user=me, status='pending'
+    ).select_related('requesting_user', 'requesting_user__profile').order_by('-created_at')
+    
+    # Get pending friend requests sent by me
+    pending_requests = Friend.objects.filter(
+        requesting_user=me, status='pending'
+    ).select_related('target_user', 'target_user__profile').order_by('-created_at')
+    
+    context = {
+        'notifications': notifications,
+        'friend_requests': friend_requests,
+        'pending_requests': pending_requests,
+        'notifications_count': 0,  # All notifications are now read
+        'requests_count': friend_requests.count(),
+    }
+    
+    return render(request, "social/notifications.html", context)
+
 
 @login_required
 @require_http_methods(["GET", "POST"])

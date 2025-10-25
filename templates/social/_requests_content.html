@@ -1,0 +1,104 @@
+<!-- Friend Requests -->
+{% if friend_requests %}
+  <div class="mb-6">
+    <h3 class="text-lg font-semibold mb-4">Friend Requests</h3>
+    <div class="space-y-4">
+      {% for request in friend_requests %}
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
+          <div class="flex items-center gap-3">
+            <!-- Avatar -->
+            <div class="flex-shrink-0">
+              {% if request.requesting_user.profile and request.requesting_user.profile.avatar %}
+                <img src="{{ request.requesting_user.profile.avatar.url }}" alt="{{ request.requesting_user.username }} avatar"
+                     class="h-12 w-12 rounded-full object-cover ring-1 ring-white shadow-sm">
+              {% else %}
+                <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center text-lg text-gray-500">
+                  {{ request.requesting_user.username|first|upper }}
+                </div>
+              {% endif %}
+            </div>
+            
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-gray-900">{{ request.requesting_user.username }}</div>
+              <div class="text-sm text-gray-500">{{ request.requesting_user.first_name }} {{ request.requesting_user.last_name }}</div>
+              <div class="text-xs text-gray-400">{{ request.created_at|timesince }} ago</div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="flex gap-2">
+              <form method="post" action="{% url 'accept_friend_request' request.requesting_user.id %}" 
+                    hx-post="{% url 'accept_friend_request' request.requesting_user.id %}"
+                    hx-target="#requests-content"
+                    hx-swap="outerHTML"
+                    class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">
+                  Accept
+                </button>
+              </form>
+              <form method="post" action="{% url 'reject_friend_request' request.requesting_user.id %}" 
+                    hx-post="{% url 'reject_friend_request' request.requesting_user.id %}"
+                    hx-target="#requests-content"
+                    hx-swap="outerHTML"
+                    class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors">
+                  Reject
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+<!-- Pending Requests -->
+{% if pending_requests %}
+  <div>
+    <h3 class="text-lg font-semibold mb-4">Pending Requests</h3>
+    <div class="space-y-4">
+      {% for request in pending_requests %}
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
+          <div class="flex items-center gap-3">
+            <!-- Avatar -->
+            <div class="flex-shrink-0">
+              {% if request.target_user.profile and request.target_user.profile.avatar %}
+                <img src="{{ request.target_user.profile.avatar.url }}" alt="{{ request.target_user.username }} avatar"
+                     class="h-12 w-12 rounded-full object-cover ring-1 ring-white shadow-sm">
+              {% else %}
+                <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center text-lg text-gray-500">
+                  {{ request.target_user.username|first|upper }}
+                </div>
+              {% endif %}
+            </div>
+            
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-gray-900">{{ request.target_user.username }}</div>
+              <div class="text-sm text-gray-500">{{ request.target_user.first_name }} {{ request.target_user.last_name }}</div>
+              <div class="text-xs text-gray-400">{{ request.created_at|timesince }} ago</div>
+            </div>
+            
+            <!-- Status -->
+            <div class="text-sm text-gray-500">
+              <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded-full">Pending</span>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+{% if not friend_requests and not pending_requests %}
+  <div class="text-center py-12">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+    </svg>
+    <h3 class="mt-2 text-sm font-medium text-gray-900">No requests</h3>
+    <p class="mt-1 text-sm text-gray-500">No friend requests at the moment.</p>
+  </div>
+{% endif %}
