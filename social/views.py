@@ -43,10 +43,31 @@ def profile_me(request):
     me = get_object_or_404(U, pk=request.user.id)
     # If you registered List in places, Django will create me.list_set
     lists = getattr(me, "list_set", None).all().order_by("title") if hasattr(me, "list_set") else []
+    
+    # Get recent reviews for Updates tab
+    from places.models import Review
+    recent_reviews = Review.objects.filter(user=me).select_related('restaurant').order_by('-created_at')[:10]
+    
+    # Get profile stats
+    profile = getattr(me, 'profile', None)
+    stats = {
+        'avg_rating': profile.avg_rating if profile else None,
+        'spots_reviewed': profile.spots_reviewed_count if profile else 0,
+        'spots_saved': profile.spots_saved_count if profile else 0,
+        'favorite_cuisines': profile.favorite_cuisines if profile else [],
+        'favorite_spots': profile.favorite_spots.all() if profile else [],
+    }
+    
     return render(
         request,
         "social/profile_me.html",
-        {"me": me, "lists": lists, "active_tab": "profile"},
+        {
+            "me": me, 
+            "lists": lists, 
+            "active_tab": "profile",
+            "recent_reviews": recent_reviews,
+            "stats": stats,
+        },
     )
 
 
