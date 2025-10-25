@@ -49,6 +49,12 @@ def profile_me(request):
     from django.db.models import Prefetch, Count
     from .models import Like
     
+    # Get filter parameters
+    would_go_again = request.GET.get('would_go_again')
+    date_filter = request.GET.get('date')
+    city_filter = request.GET.get('city')
+    
+    # Build the base queryset
     activities = (
         Activity.objects
         .select_related("user", "user__profile", "restaurant", "review")
@@ -63,8 +69,32 @@ def profile_me(request):
             "review__photos"
         )
         .annotate(comment_count=Count("comments"))
-        .order_by("-created_at")[:20]
     )
+    
+    # Apply filters
+    if would_go_again == 'yes':
+        activities = activities.filter(review__would_go_again=True)
+    elif would_go_again == 'no':
+        activities = activities.filter(review__would_go_again=False)
+    
+    if date_filter == 'week':
+        from datetime import datetime, timedelta
+        week_ago = datetime.now() - timedelta(days=7)
+        activities = activities.filter(created_at__gte=week_ago)
+    elif date_filter == 'month':
+        from datetime import datetime, timedelta
+        month_ago = datetime.now() - timedelta(days=30)
+        activities = activities.filter(created_at__gte=month_ago)
+    elif date_filter == 'year':
+        from datetime import datetime, timedelta
+        year_ago = datetime.now() - timedelta(days=365)
+        activities = activities.filter(created_at__gte=year_ago)
+    
+    if city_filter:
+        activities = activities.filter(restaurant__city__icontains=city_filter)
+    
+    # Apply ordering and limit
+    activities = activities.order_by("-created_at")[:20]
     
     # Add liked_by_me annotation
     liked_ids = set(

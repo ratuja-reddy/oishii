@@ -144,6 +144,62 @@
 
 <!-- Updates Tab Content -->
 <div id="updates-content" class="hidden">
+  <!-- Filters -->
+  <div class="mb-4">
+    <div class="flex items-center gap-3 text-xs text-gray-500">
+      <select onchange="applyFilter('would_go_again', this.value)" 
+              class="text-xs border-0 bg-transparent text-gray-500 hover:text-gray-700 focus:outline-none">
+        <option value="" {% if not request.GET.would_go_again %}selected{% endif %}>Any rating</option>
+        <option value="yes" {% if request.GET.would_go_again == 'yes' %}selected{% endif %}>👍 Would go again</option>
+        <option value="no" {% if request.GET.would_go_again == 'no' %}selected{% endif %}>👎 Wouldn't go again</option>
+      </select>
+      
+      <span class="text-gray-300">•</span>
+      
+      <select onchange="applyFilter('date', this.value)" 
+              class="text-xs border-0 bg-transparent text-gray-500 hover:text-gray-700 focus:outline-none">
+        <option value="" {% if not request.GET.date %}selected{% endif %}>Any time</option>
+        <option value="week" {% if request.GET.date == 'week' %}selected{% endif %}>This week</option>
+        <option value="month" {% if request.GET.date == 'month' %}selected{% endif %}>This month</option>
+        <option value="year" {% if request.GET.date == 'year' %}selected{% endif %}>This year</option>
+      </select>
+      
+      <span class="text-gray-300">•</span>
+      
+      <input type="text" 
+             id="city-filter" 
+             placeholder="City..." 
+             value="{{ request.GET.city|default:'' }}"
+             class="text-xs border-0 bg-transparent text-gray-500 placeholder-gray-400 focus:outline-none focus:text-gray-700"
+             onkeyup="if(event.key==='Enter') applyCityFilter()">
+      
+      {% if request.GET.city %}
+        <button onclick="applyFilter('city', '')" 
+                class="text-gray-400 hover:text-gray-600 text-xs">
+          ✕
+        </button>
+      {% endif %}
+      
+      {% if request.GET.would_go_again or request.GET.date or request.GET.city %}
+        <span class="text-gray-300">•</span>
+        <button onclick="clearAllFilters()" 
+                class="text-xs text-gray-400 hover:text-gray-600">
+          Clear
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Results count -->
+  {% if activities %}
+    <div class="text-sm text-gray-600 mb-4">
+      Showing {{ activities|length }} review{{ activities|length|pluralize }}
+      {% if request.GET.would_go_again or request.GET.date or request.GET.city %}
+        matching your filters
+      {% endif %}
+    </div>
+  {% endif %}
+
   <div class="space-y-5">
     {% if activities %}
       {% for a in activities %}
@@ -372,6 +428,13 @@ document.getElementById('updates-tab').addEventListener('click', function() {
   document.getElementById('about-tab').classList.remove('border-indigo-500', 'text-gray-900');
 });
 
+// Check for hash on page load to switch to Updates tab
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.location.hash === '#updates') {
+    document.getElementById('updates-tab').click();
+  }
+});
+
 // Image Modal Functions
 function openImageModal(imageUrl) {
   // Create modal if it doesn't exist
@@ -414,6 +477,34 @@ document.addEventListener('keydown', function(e) {
     closeImageModal();
   }
 });
+
+// Filter functions
+function applyFilter(filterType, value) {
+  const url = new URL(window.location);
+  if (value) {
+    url.searchParams.set(filterType, value);
+  } else {
+    url.searchParams.delete(filterType);
+  }
+  // Add hash to stay on Updates tab
+  url.hash = 'updates';
+  window.location.href = url.toString();
+}
+
+function applyCityFilter() {
+  const cityValue = document.getElementById('city-filter').value.trim();
+  applyFilter('city', cityValue);
+}
+
+function clearAllFilters() {
+  const url = new URL(window.location);
+  url.searchParams.delete('would_go_again');
+  url.searchParams.delete('date');
+  url.searchParams.delete('city');
+  // Add hash to stay on Updates tab
+  url.hash = 'updates';
+  window.location.href = url.toString();
+}
 </script>
 
 {% endblock %}
