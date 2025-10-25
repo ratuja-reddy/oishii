@@ -42,18 +42,37 @@ def profile_me(request):
     U = get_user_model()
     me = get_object_or_404(U, pk=request.user.id)
     
-    # Handle favorite spots form submission
-    if request.method == "POST" and "favorite_spots" in request.POST:
+    # Handle form submissions
+    if request.method == "POST":
         profile, _ = Profile.objects.get_or_create(user=me)
-        favorite_spots_ids = request.POST.getlist('favorite_spots')
-        if len(favorite_spots_ids) > 3:
-            messages.error(request, "You can only select up to 3 favorite spots.")
-        else:
-            from places.models import Restaurant
-            favorite_spots = Restaurant.objects.filter(id__in=favorite_spots_ids)
-            profile.favorite_spots.set(favorite_spots)
-            messages.success(request, "Favorite spots updated!")
-        return redirect("profile_me")
+        
+        # Handle favorite spots form submission
+        if "favorite_spots" in request.POST:
+            favorite_spots_ids = request.POST.getlist('favorite_spots')
+            if len(favorite_spots_ids) > 3:
+                messages.error(request, "You can only select up to 3 favorite spots.")
+            else:
+                from places.models import Restaurant
+                favorite_spots = Restaurant.objects.filter(id__in=favorite_spots_ids)
+                profile.favorite_spots.set(favorite_spots)
+                messages.success(request, "Favorite spots updated!")
+            return redirect("profile_me")
+        
+        # Handle favorite cuisines form submission
+        elif "favorite_cuisines" in request.POST:
+            favorite_cuisines = request.POST.getlist('favorite_cuisines')
+            profile.favorite_cuisines = favorite_cuisines
+            profile.save()
+            messages.success(request, "Favorite cuisines updated!")
+            return redirect("profile_me")
+        
+        # Handle bio form submission
+        elif "bio" in request.POST:
+            bio = request.POST.get('bio', '').strip()
+            profile.bio = bio
+            profile.save()
+            messages.success(request, "About section updated!")
+            return redirect("profile_me")
     # If you registered List in places, Django will create me.list_set
     lists = getattr(me, "list_set", None).all().order_by("title") if hasattr(me, "list_set") else []
     
@@ -131,6 +150,10 @@ def profile_me(request):
     from places.models import Restaurant
     all_restaurants = Restaurant.objects.all().order_by('name')
     
+    # Get cuisine choices for the dropdown
+    from .forms import ProfileForm
+    cuisine_choices = ProfileForm.CUISINE_CHOICES
+    
     return render(
         request,
         "social/profile_me.html",
@@ -141,6 +164,7 @@ def profile_me(request):
             "activities": activities,
             "stats": stats,
             "all_restaurants": all_restaurants,
+            "cuisine_choices": cuisine_choices,
         },
     )
 

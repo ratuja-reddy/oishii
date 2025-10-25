@@ -96,12 +96,38 @@
     <section class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
       <div class="flex items-center justify-between mb-1">
         <h2 class="font-semibold">About</h2>
-        <button onclick="window.location.href='{% url 'edit_profile' %}'" 
-                class="text-gray-400 hover:text-gray-600 transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-          </svg>
-        </button>
+        <div class="relative">
+          <button onclick="toggleAboutDropdown()" 
+                  class="text-gray-400 hover:text-gray-600 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+          </button>
+          <!-- Dropdown for editing about -->
+          <div id="about-dropdown" class="hidden absolute right-0 top-6 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+            <div class="p-4">
+              <h3 class="font-semibold mb-3">Edit About</h3>
+              <form method="post" action="{% url 'profile_me' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Tell us about yourself:</label>
+                  <textarea name="bio" rows="4" 
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            placeholder="Share a bit about yourself, your food preferences, or what you're looking for...">{{ me.profile.bio|default:"" }}</textarea>
+                  <p class="text-xs text-gray-500 mt-1">This will be visible on your profile</p>
+                </div>
+                <div class="flex gap-2">
+                  <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    Save Changes
+                  </button>
+                  <button type="button" onclick="toggleAboutDropdown()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
       <p class="text-gray-800 whitespace-pre-line leading-snug">{{ me.profile.bio }}</p>
     </section>
@@ -114,12 +140,57 @@
         <span class="mr-2">🍽️</span>
         Favorite Cuisines
       </h2>
-      <button onclick="window.location.href='{% url 'edit_profile' %}'" 
-              class="text-gray-400 hover:text-gray-600 transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-        </svg>
-      </button>
+      <div class="relative">
+        <button onclick="toggleCuisinesDropdown()" 
+                class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+        </button>
+        <!-- Dropdown for editing cuisines -->
+        <div id="cuisines-dropdown" class="hidden absolute right-0 top-6 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+          <div class="p-4">
+            <h3 class="font-semibold mb-3">Edit Favorite Cuisines</h3>
+            <form method="post" action="{% url 'profile_me' %}">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Select your favorite cuisines:
+                  <span id="cuisines-count" class="text-indigo-600 font-semibold">({{ stats.favorite_cuisines|length }})</span>
+                </label>
+                
+                <!-- Search input -->
+                <input type="text" id="cuisines-search" placeholder="Search cuisines..." 
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                
+                <!-- Cuisine list with checkboxes -->
+                <div id="cuisines-list" class="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                  {% for value, label in cuisine_choices %}
+                    <label class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0">
+                      <input type="checkbox" name="favorite_cuisines" value="{{ value }}" 
+                             {% if value in stats.favorite_cuisines %}checked{% endif %}
+                             class="mr-3 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cuisines-checkbox">
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-gray-900">{{ label }}</div>
+                      </div>
+                    </label>
+                  {% endfor %}
+                </div>
+                
+                <p class="text-xs text-gray-500 mt-2">Search and select your favorite cuisines</p>
+              </div>
+              <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                  Save Changes
+                </button>
+                <button type="button" onclick="toggleCuisinesDropdown()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
     {% if stats.favorite_cuisines %}
       <div class="flex flex-wrap gap-2">
@@ -511,13 +582,38 @@ function toggleSpotsDropdown() {
   dropdown.classList.toggle('hidden');
 }
 
+// Toggle cuisines dropdown
+function toggleCuisinesDropdown() {
+  const dropdown = document.getElementById('cuisines-dropdown');
+  dropdown.classList.toggle('hidden');
+}
+
+// Toggle about dropdown
+function toggleAboutDropdown() {
+  const dropdown = document.getElementById('about-dropdown');
+  dropdown.classList.toggle('hidden');
+}
+
 // Close dropdown when clicking outside
 document.addEventListener('click', function(event) {
-  const dropdown = document.getElementById('spots-dropdown');
-  const button = event.target.closest('button[onclick="toggleSpotsDropdown()"]');
+  const spotsDropdown = document.getElementById('spots-dropdown');
+  const cuisinesDropdown = document.getElementById('cuisines-dropdown');
+  const aboutDropdown = document.getElementById('about-dropdown');
   
-  if (!dropdown.contains(event.target) && !button) {
-    dropdown.classList.add('hidden');
+  const spotsButton = event.target.closest('button[onclick="toggleSpotsDropdown()"]');
+  const cuisinesButton = event.target.closest('button[onclick="toggleCuisinesDropdown()"]');
+  const aboutButton = event.target.closest('button[onclick="toggleAboutDropdown()"]');
+  
+  if (!spotsDropdown.contains(event.target) && !spotsButton) {
+    spotsDropdown.classList.add('hidden');
+  }
+  
+  if (!cuisinesDropdown.contains(event.target) && !cuisinesButton) {
+    cuisinesDropdown.classList.add('hidden');
+  }
+  
+  if (!aboutDropdown.contains(event.target) && !aboutButton) {
+    aboutDropdown.classList.add('hidden');
   }
 });
 
@@ -586,6 +682,45 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initial count update
     updateCount();
+  }
+  
+  // Cuisines search and selection functionality
+  const cuisinesSearchInput = document.getElementById('cuisines-search');
+  const cuisinesList = document.getElementById('cuisines-list');
+  const cuisinesCount = document.getElementById('cuisines-count');
+  const cuisinesCheckboxes = document.querySelectorAll('.cuisines-checkbox');
+  
+  if (cuisinesSearchInput && cuisinesList && cuisinesCount && cuisinesCheckboxes.length > 0) {
+    // Search functionality
+    cuisinesSearchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const labels = cuisinesList.querySelectorAll('label');
+      
+      labels.forEach(label => {
+        const cuisineName = label.querySelector('.font-medium').textContent.toLowerCase();
+        
+        if (cuisineName.includes(searchTerm)) {
+          label.style.display = 'flex';
+        } else {
+          label.style.display = 'none';
+        }
+      });
+    });
+    
+    // Update count
+    function updateCuisinesCount() {
+      const checkedBoxes = document.querySelectorAll('.cuisines-checkbox:checked');
+      const count = checkedBoxes.length;
+      cuisinesCount.textContent = `(${count})`;
+    }
+    
+    // Add event listeners to checkboxes
+    cuisinesCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', updateCuisinesCount);
+    });
+    
+    // Initial count update
+    updateCuisinesCount();
   }
 });
 
