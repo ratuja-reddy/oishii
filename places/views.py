@@ -362,9 +362,9 @@ def edit_list(request, list_id):
         lst.is_public = is_public
         lst.save()
 
-        # HTMX redirect so the page changes without reloading everything
+        # Close the modal and refresh the list item
         resp = HttpResponse("")
-        resp["HX-Redirect"] = reverse("list_detail", args=[lst.id])
+        resp["HX-Trigger"] = "listUpdated"
         return resp
 
     # GET -> show modal
