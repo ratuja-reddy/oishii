@@ -41,11 +41,11 @@ def profile_me(request):
     """Basic profile page; shows lists via reverse relation if present."""
     U = get_user_model()
     me = get_object_or_404(U, pk=request.user.id)
-    
+
     # Handle form submissions
     if request.method == "POST":
         profile, _ = Profile.objects.get_or_create(user=me)
-        
+
         # Handle favorite spots form submission
         if "favorite_spots" in request.POST:
             favorite_spots_ids = request.POST.getlist('favorite_spots')
@@ -57,7 +57,7 @@ def profile_me(request):
                 profile.favorite_spots.set(favorite_spots)
                 messages.success(request, "Favorite spots updated!")
             return redirect("profile_me")
-        
+
         # Handle favorite cuisines form submission
         elif "favorite_cuisines" in request.POST:
             favorite_cuisines = request.POST.getlist('favorite_cuisines')
@@ -65,7 +65,7 @@ def profile_me(request):
             profile.save()
             messages.success(request, "Favorite cuisines updated!")
             return redirect("profile_me")
-        
+
         # Handle bio form submission
         elif "bio" in request.POST:
             bio = request.POST.get('bio', '').strip()
@@ -75,17 +75,17 @@ def profile_me(request):
             return redirect("profile_me")
     # If you registered List in places, Django will create me.list_set
     lists = getattr(me, "list_set", None).all().order_by("title") if hasattr(me, "list_set") else []
-    
+
     # Get recent activities for Updates tab (like the main feed)
-    from places.models import Review
-    from django.db.models import Prefetch, Count
+    from django.db.models import Count, Prefetch
+
     from .models import Like
-    
+
     # Get filter parameters
     would_go_again = request.GET.get('would_go_again')
     date_filter = request.GET.get('date')
     city_filter = request.GET.get('city')
-    
+
     # Build the base queryset
     activities = (
         Activity.objects
@@ -102,13 +102,13 @@ def profile_me(request):
         )
         .annotate(comment_count=Count("comments"))
     )
-    
+
     # Apply filters
     if would_go_again == 'yes':
         activities = activities.filter(review__would_go_again=True)
     elif would_go_again == 'no':
         activities = activities.filter(review__would_go_again=False)
-    
+
     if date_filter == 'week':
         from datetime import datetime, timedelta
         week_ago = datetime.now() - timedelta(days=7)
@@ -121,13 +121,13 @@ def profile_me(request):
         from datetime import datetime, timedelta
         year_ago = datetime.now() - timedelta(days=365)
         activities = activities.filter(created_at__gte=year_ago)
-    
+
     if city_filter:
         activities = activities.filter(restaurant__city__icontains=city_filter)
-    
+
     # Apply ordering and limit
     activities = activities.order_by("-created_at")[:20]
-    
+
     # Add liked_by_me annotation
     liked_ids = set(
         Like.objects.filter(user=me, activity__in=activities)
@@ -135,7 +135,7 @@ def profile_me(request):
     )
     for a in activities:
         a.liked_by_me = a.id in liked_ids
-    
+
     # Get profile stats
     profile = getattr(me, 'profile', None)
     stats = {
@@ -145,21 +145,21 @@ def profile_me(request):
         'favorite_cuisines': profile.favorite_cuisines if profile else [],
         'favorite_spots': profile.favorite_spots.all() if profile else [],
     }
-    
+
     # Get all restaurants for the dropdown
     from places.models import Restaurant
     all_restaurants = Restaurant.objects.all().order_by('name')
-    
+
     # Get cuisine choices for the dropdown
     from .forms import ProfileForm
     cuisine_choices = ProfileForm.CUISINE_CHOICES
-    
+
     return render(
         request,
         "social/profile_me.html",
         {
-            "me": me, 
-            "lists": lists, 
+            "me": me,
+            "lists": lists,
             "active_tab": "profile",
             "activities": activities,
             "stats": stats,
@@ -405,10 +405,11 @@ def mark_notification_read(request, notification_id):
 
 @login_required
 def notification_count(request):
-    """Get count of unread notifications (not friend requests)."""
-    # Only count actual notifications, not friend requests
-    count = Notification.objects.filter(user=request.user, is_read=False).count()
-    return JsonResponse({"count": count})
+    """Get combined count of unread notifications and pending friend requests."""
+    unread_notifications_count = Notification.objects.filter(user=request.user, is_read=False).count()
+    pending_friend_requests_count = Friend.objects.filter(target_user=request.user, status='pending').count()
+    total_count = unread_notifications_count + pending_friend_requests_count
+    return JsonResponse({"count": total_count})
 
 
 # ---------- Follow (HTMX) ----------
@@ -517,20 +518,22 @@ def accept_friend_request(request, user_id: int):
         friend_requests = Friend.objects.filter(
             target_user=request.user, status='pending'
         ).select_related('requesting_user', 'requesting_user__profile').order_by('-created_at')
-        
+
         pending_requests = Friend.objects.filter(
             requesting_user=request.user, status='pending'
         ).select_related('target_user', 'target_user__profile').order_by('-created_at')
-        
+
         context = {
             'friend_requests': friend_requests,
             'pending_requests': pending_requests,
         }
-        
+
         response = render(request, "social/_requests_content.html", context)
-        response['HX-Trigger'] = 'showToast,updateNotificationCount'
+        # Send updated friend request count
+        updated_requests_count = friend_requests.count()
+        response['HX-Trigger'] = f'showToast,updateNotificationCount,updateRequestsCount:{updated_requests_count}'
         return response
-    
+
     return redirect('friends')
 
 
@@ -561,20 +564,22 @@ def reject_friend_request(request, user_id: int):
         friend_requests = Friend.objects.filter(
             target_user=request.user, status='pending'
         ).select_related('requesting_user', 'requesting_user__profile').order_by('-created_at')
-        
+
         pending_requests = Friend.objects.filter(
             requesting_user=request.user, status='pending'
         ).select_related('target_user', 'target_user__profile').order_by('-created_at')
-        
+
         context = {
             'friend_requests': friend_requests,
             'pending_requests': pending_requests,
         }
-        
+
         response = render(request, "social/_requests_content.html", context)
-        response['HX-Trigger'] = 'updateNotificationCount'
+        # Send updated friend request count
+        updated_requests_count = friend_requests.count()
+        response['HX-Trigger'] = f'updateNotificationCount,updateRequestsCount:{updated_requests_count}'
         return response
-    
+
     return redirect('friends')
 
 
@@ -694,10 +699,10 @@ def find_friends_search(request):
 def notifications(request):
     """Dedicated notifications page with tabs for Notifications and Requests"""
     me = request.user
-    
+
     # Mark all notifications as read when user visits the notifications page
     Notification.objects.filter(user=me, is_read=False).update(is_read=True)
-    
+
     # Get all notifications for the user
     notifications = (
         Notification.objects
@@ -705,25 +710,26 @@ def notifications(request):
         .select_related('comment', 'comment__user', 'comment__user__profile', 'activity', 'activity__restaurant', 'activity__review')
         .order_by('-created_at')
     )
-    
+
     # Get friend requests (for the Requests tab)
     friend_requests = Friend.objects.filter(
         target_user=me, status='pending'
     ).select_related('requesting_user', 'requesting_user__profile').order_by('-created_at')
-    
+
     # Get pending friend requests sent by me
     pending_requests = Friend.objects.filter(
         requesting_user=me, status='pending'
     ).select_related('target_user', 'target_user__profile').order_by('-created_at')
-    
+
     context = {
         'notifications': notifications,
         'friend_requests': friend_requests,
         'pending_requests': pending_requests,
         'notifications_count': 0,  # All notifications are now read
         'requests_count': friend_requests.count(),
+        'active_tab': 'home',  # Highlight the Home tab in bottom navigation
     }
-    
+
     return render(request, "social/notifications.html", context)
 
 

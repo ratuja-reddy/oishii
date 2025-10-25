@@ -21,14 +21,12 @@
     <button id="notifications-tab" class="px-4 py-2 text-sm font-medium text-indigo-600 border-b-2 border-indigo-500">
       Notifications
     </button>
-    <button id="requests-tab" class="px-4 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 flex items-center gap-2">
-      Requests
-      {% if requests_count > 0 %}
-        <span class="bg-orange-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+      <button id="requests-tab" class="px-4 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 flex items-center gap-2">
+        Requests
+        <span id="requests-badge" class="bg-orange-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center {% if requests_count == 0 %}hidden{% endif %}">
           {{ requests_count }}
         </span>
-      {% endif %}
-    </button>
+      </button>
   </div>
 
   <!-- Notifications Tab Content -->
@@ -155,6 +153,36 @@ document.addEventListener('updateNotificationCount', function(event) {
   updateNotificationCount();
 });
 
+// Listen for requests count updates - use a more direct approach
+document.body.addEventListener('htmx:afterRequest', function(event) {
+  // Check if this was a friend request accept/reject
+  if (event.detail.xhr.responseURL.includes('/friends/accept/') || event.detail.xhr.responseURL.includes('/friends/reject/')) {
+    console.log('Friend request action completed, updating badge...');
+    
+    // Wait a moment for the DOM to update, then count the remaining requests
+    setTimeout(function() {
+      const requestsContent = document.getElementById('requests-content');
+      if (requestsContent) {
+        // Count the number of friend request cards in the updated content
+        const requestCards = requestsContent.querySelectorAll('.friend-request-card');
+        const count = requestCards.length;
+        
+        console.log('Updated requests count:', count);
+        
+        const requestsBadge = document.getElementById('requests-badge');
+        if (requestsBadge) {
+          if (count > 0) {
+            requestsBadge.textContent = count;
+            requestsBadge.classList.remove('hidden');
+          } else {
+            requestsBadge.classList.add('hidden');
+          }
+        }
+      }
+    }, 100); // Small delay to ensure DOM is updated
+  }
+});
+
 // Notifications are automatically marked as read when the page loads (server-side)
 
 // Handle notification click - just redirect, don't mark as read
@@ -203,6 +231,19 @@ function updateNotificationCount() {
           notificationBadge.classList.add('hidden');
           notificationBell.classList.remove('text-indigo-600');
           notificationBell.classList.add('text-gray-600');
+        }
+      }
+      
+      // Also update the home tab badge in the bottom navigation
+      const homeBadge = document.getElementById('home-notification-badge');
+      const homeCount = document.getElementById('home-notification-count');
+      
+      if (homeBadge && homeCount) {
+        if (data.count > 0) {
+          homeBadge.classList.remove('hidden');
+          homeCount.textContent = data.count;
+        } else {
+          homeBadge.classList.add('hidden');
         }
       }
     })

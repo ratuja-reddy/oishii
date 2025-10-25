@@ -39,26 +39,26 @@ class ProfileForm(forms.ModelForm):
         ('moroccan', 'Moroccan'),
         ('other', 'Other'),
     ]
-    
+
     favorite_cuisines = forms.MultipleChoiceField(
         choices=CUISINE_CHOICES,
         widget=forms.CheckboxSelectMultiple(attrs={"class": "space-y-2"}),
         required=False,
         help_text="Select your favorite cuisines"
     )
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Allow selection from all restaurants
         from places.models import Restaurant
         self.fields['favorite_spots'].queryset = Restaurant.objects.all().order_by('name')
-    
+
     def clean_favorite_spots(self):
         spots = self.cleaned_data.get('favorite_spots')
         if len(spots) > 3:
             raise forms.ValidationError("You can only select up to 3 favorite spots.")
         return spots
-    
+
     class Meta:
         model = Profile
         fields = ["display_name", "bio", "location", "website", "avatar", "favorite_cuisines", "favorite_spots"]

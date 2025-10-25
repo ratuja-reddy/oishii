@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from django.db.models import Avg
 
 
 class Friend(models.Model):
@@ -146,14 +145,14 @@ class Profile(models.Model):
     location = models.CharField(max_length=80, blank=True)
     website = models.URLField(blank=True)
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
-    
+
     # New Goodreads-style fields
     favorite_cuisines = models.JSONField(default=list, blank=True, help_text="List of favorite cuisine types")
     favorite_spots = models.ManyToManyField("places.Restaurant", blank=True, related_name="favorite_of", limit_choices_to={'id__in': []})
-    
+
     def __str__(self):
         return f"Profile({self.user.username})"
-    
+
     @property
     def avg_rating(self):
         """Calculate average rating from user's reviews"""
@@ -162,13 +161,13 @@ class Profile(models.Model):
         if not reviews.exists():
             return None
         return round(reviews.aggregate(avg=models.Avg('overall_rating'))['avg'], 1)
-    
+
     @property
     def spots_reviewed_count(self):
         """Count of spots reviewed by user"""
         from places.models import Review
         return Review.objects.filter(user=self.user).count()
-    
+
     @property
     def spots_saved_count(self):
         """Count of unique spots saved in lists (excluding 'Visited' list)"""
