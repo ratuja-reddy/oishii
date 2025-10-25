@@ -43,10 +43,87 @@ def profile_me(request):
     me = get_object_or_404(U, pk=request.user.id)
     # If you registered List in places, Django will create me.list_set
     lists = getattr(me, "list_set", None).all().order_by("title") if hasattr(me, "list_set") else []
+    
+    # Get recent activities for Updates tab (like the main feed)
+    from places.models import Review
+    from django.db.models import Prefetch, Count
+    from .models import Like
+    
+    # Get filter parameters
+    would_go_again = request.GET.get('would_go_again')
+    date_filter = request.GET.get('date')
+    city_filter = request.GET.get('city')
+    
+    # Build the base queryset
+    activities = (
+        Activity.objects
+        .select_related("user", "user__profile", "restaurant", "review")
+        .filter(user=me, type="review")
+        .prefetch_related(
+            Prefetch(
+                "comments",
+                queryset=Comment.objects
+                    .select_related("user", "user__profile")
+                    .order_by("created_at")
+            ),
+            "review__photos"
+        )
+        .annotate(comment_count=Count("comments"))
+    )
+    
+    # Apply filters
+    if would_go_again == 'yes':
+        activities = activities.filter(review__would_go_again=True)
+    elif would_go_again == 'no':
+        activities = activities.filter(review__would_go_again=False)
+    
+    if date_filter == 'week':
+        from datetime import datetime, timedelta
+        week_ago = datetime.now() - timedelta(days=7)
+        activities = activities.filter(created_at__gte=week_ago)
+    elif date_filter == 'month':
+        from datetime import datetime, timedelta
+        month_ago = datetime.now() - timedelta(days=30)
+        activities = activities.filter(created_at__gte=month_ago)
+    elif date_filter == 'year':
+        from datetime import datetime, timedelta
+        year_ago = datetime.now() - timedelta(days=365)
+        activities = activities.filter(created_at__gte=year_ago)
+    
+    if city_filter:
+        activities = activities.filter(restaurant__city__icontains=city_filter)
+    
+    # Apply ordering and limit
+    activities = activities.order_by("-created_at")[:20]
+    
+    # Add liked_by_me annotation
+    liked_ids = set(
+        Like.objects.filter(user=me, activity__in=activities)
+        .values_list("activity_id", flat=True)
+    )
+    for a in activities:
+        a.liked_by_me = a.id in liked_ids
+    
+    # Get profile stats
+    profile = getattr(me, 'profile', None)
+    stats = {
+        'avg_rating': profile.avg_rating if profile else None,
+        'spots_reviewed': profile.spots_reviewed_count if profile else 0,
+        'spots_saved': profile.spots_saved_count if profile else 0,
+        'favorite_cuisines': profile.favorite_cuisines if profile else [],
+        'favorite_spots': profile.favorite_spots.all() if profile else [],
+    }
+    
     return render(
         request,
         "social/profile_me.html",
-        {"me": me, "lists": lists, "active_tab": "profile"},
+        {
+            "me": me, 
+            "lists": lists, 
+            "active_tab": "profile",
+            "activities": activities,
+            "stats": stats,
+        },
     )
 
 
