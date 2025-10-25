@@ -1,52 +1,203 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-2">Review: {{ restaurant.name }}</h1>
+<div class="max-w-3xl mx-auto">
 
-<form method="post" enctype="multipart/form-data" class="space-y-3 bg-white rounded-xl p-4 shadow">
-  {% csrf_token %}
-
-  <div class="opacity-70">
-    <label class="block text-sm font-medium">Restaurant</label>
-    {{ form.restaurant }}
-    <p class="text-xs text-gray-500 mt-1">Locked to this restaurant</p>
-  </div>
-
-  <div>
-    <label class="block text-sm font-medium">Overall rating (1–5)</label>
-    {{ form.overall_rating }}
-  </div>
-
-  <div class="grid grid-cols-2 gap-3">
-    <div>
-      <label class="block text-sm">Food (optional)</label>
-      {{ form.food }}
-    </div>
-    <div>
-      <label class="block text-sm">Service (optional)</label>
-      {{ form.service }}
-    </div>
-    <div>
-      <label class="block text-sm">Value (optional)</label>
-      {{ form.value }}
-    </div>
-    <div>
-      <label class="block text-sm">Atmosphere (optional)</label>
-      {{ form.atmosphere }}
+  <!-- Header card -->
+  <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-gray-900 to-gray-700 text-white p-6 mb-6">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-2xl bg-white/10 grid place-items-center">
+        <!-- fork & knife -->
+        <svg viewBox="0 0 24 24" class="h-5 w-5"><path fill="currentColor" d="M7 2a1 1 0 0 1 1 1v6a2 2 0 0 0 2 2v10a1 1 0 1 1-2 0V11a2 2 0 0 0-2-2V3a1 1 0 0 1 1-1Zm10.5 0a1 1 0 0 1 1 1v6.25c0 1.243-1.007 2.25-2.25 2.25H16v10a1 1 0 1 1-2 0V3a1 1 0 1 1 2 0v4h1.25A1.25 1.25 0 0 0 18.5 5.75V3a1 1 0 0 1 1-1Z"/></svg>
+      </div>
+      <div>
+        <h1 class="text-xl font-semibold leading-tight">Write a review</h1>
+        <p class="text-sm text-white/70">for <span class="font-medium">{{ restaurant.name }}</span></p>
+      </div>
     </div>
   </div>
 
-  <div>
-    <label class="block text-sm font-medium">Your review (optional)</label>
-    {{ form.text }}
-  </div>
+  <form id="reviewForm" method="post" enctype="multipart/form-data" class="bg-white rounded-2xl shadow ring-1 ring-black/5 p-6 space-y-6">
+    {% csrf_token %}
 
-  <div>
-    <label class="block text-sm font-medium">Photos (optional)</label>
-    {{ form.photos }}
-    <p class="text-xs text-gray-500 mt-1">Upload photos of your meal or the restaurant</p>
-  </div>
+    {% if form.non_field_errors %}
+      <div class="rounded-xl bg-red-50 text-red-800 px-4 py-3 text-sm">{{ form.non_field_errors }}</div>
+    {% endif %}
 
-  <button class="px-4 py-2 rounded-xl bg-gray-900 text-white">Save review</button>
-  <a class="ml-2 text-sm text-blue-600 underline" href="{% url 'places:restaurant_detail' restaurant.pk %}">Back</a>
-</form>
+    <!-- Restaurant (locked) -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Restaurant</label>
+      {{ form.restaurant|add_class:"w-full mt-1 rounded-xl border-gray-300 bg-gray-100 text-gray-700 cursor-not-allowed" }}
+      <p class="text-xs text-gray-500 mt-1">Locked to this restaurant.</p>
+    </div>
+
+    <!-- Overall rating: star control + hidden select -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Overall rating</label>
+      <!-- hide the original widget but keep it in the form -->
+      <div class="sr-only">
+        {{ form.overall_rating|add_class:"hidden" }}
+      </div>
+      <div id="stars" class="flex gap-2">
+        {% for i in "12345" %}
+          <button type="button" data-value="{{ forloop.counter }}" aria-label="{{ forloop.counter }} star"
+            class="star h-10 w-10 rounded-xl grid place-items-center border border-gray-300 hover:border-gray-500 transition">
+            <svg viewBox="0 0 24 24" class="h-5 w-5 text-gray-300"><path fill="currentColor" d="M12 17.27 18.18 21l-1.63-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.45 4.73L5.82 21z"/></svg>
+          </button>
+        {% endfor %}
+      </div>
+      <p class="text-xs text-gray-500 mt-1" id="overallHelp">Tap to rate 1–5 stars.</p>
+      {% if form.overall_rating.errors %}<p class="text-sm text-red-600 mt-1">{{ form.overall_rating.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <!-- Sub-ratings: segmented pills 1–5 -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {% for field,label in
+        form.food.label|yesno:"Food,Food"|add:","|cut:"," as dummy %}
+      {% endfor %}
+      {% for f in "food,service,value,atmosphere"|cut:","|split:"," %}
+      <div>
+        {% with field=form|get_item:f %}
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          {{ field.label }} <span class="text-gray-400 text-xs">(optional)</span>
+        </label>
+        <div class="sr-only">
+          {{ field|add_class:"hidden" }}
+        </div>
+        <div class="seg flex gap-2" data-target="{{ field.id_for_label }}">
+          {% for n in "12345" %}
+            <button type="button" data-value="{{ forloop.counter }}"
+              class="seg-btn text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:border-gray-500">
+              {{ forloop.counter }}
+            </button>
+          {% endfor %}
+        </div>
+        {% if field.errors %}<p class="text-sm text-red-600 mt-1">{{ field.errors|join:", " }}</p>{% endif %}
+        {% endwith %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Review text: floating label + counter -->
+    <div class="relative">
+      <textarea id="{{ form.text.id_for_label }}"
+        name="{{ form.text.name }}"
+        maxlength="1000"
+        class="peer w-full min-h-[140px] rounded-xl border border-gray-300 px-4 pt-6 pb-4 focus:border-gray-900 focus:ring-gray-900"
+        placeholder=" ">{{ form.text.value|default_if_none:"" }}</textarea>
+      <label for="{{ form.text.id_for_label }}" class="pointer-events-none absolute left-4 top-3 text-gray-500 text-sm transition
+        peer-placeholder-shown:top-4 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm
+        peer-focus:top-3 peer-focus:text-gray-700 peer-focus:text-sm">Your review (optional)</label>
+      <div class="absolute right-3 bottom-3 text-xs text-gray-400">
+        <span id="charCount">0</span>/1000
+      </div>
+      {% if form.text.errors %}<p class="text-sm text-red-600 mt-1">{{ form.text.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <!-- Photos: drop-zone + previews -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Photos (optional)</label>
+      <div id="drop" class="rounded-2xl border-2 border-dashed border-gray-300 p-6 text-center hover:border-gray-400 transition">
+        <p class="text-sm text-gray-600">Drag & drop or pick files</p>
+        <div class="mt-3">
+          {{ form.photos|add_class:"mx-auto block text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-gray-900 file:text-white" }}
+        </div>
+      </div>
+      <div id="previews" class="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-3"></div>
+      {% if form.photos.errors %}<p class="text-sm text-red-600 mt-1">{{ form.photos.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <!-- Sticky action bar -->
+    <div class="h-16"></div> <!-- spacer -->
+    <div class="fixed bottom-4 left-0 right-0 px-4">
+      <div class="mx-auto max-w-3xl bg-white/90 backdrop-blur rounded-2xl shadow ring-1 ring-black/5 p-3 flex items-center justify-between">
+        <a href="{% url 'places:restaurant_detail' restaurant.pk %}" class="text-sm text-gray-600 hover:text-gray-800">Cancel</a>
+        <button id="saveBtn" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 text-white hover:bg-black transition disabled:opacity-40 disabled:cursor-not-allowed">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm4.707 8.293-5.25 5.25a1 1 0 0 1-1.414 0l-2.25-2.25a1 1 0 1 1 1.414-1.414l1.543 1.543 4.543-4.543a1 1 0 0 1 1.414 1.414Z"/></svg>
+          Save review
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<!-- Tiny JS to wire up UI controls -->
+<script>
+  // overall stars
+  const starButtons = Array.from(document.querySelectorAll('#stars .star'));
+  const overallSelect = document.getElementById('{{ form.overall_rating.id_for_label }}');
+  const saveBtn = document.getElementById('saveBtn');
+  function paintStars(v){
+    starButtons.forEach((b,i)=>{
+      const svg=b.querySelector('svg');
+      svg.classList.toggle('text-yellow-400', i < v);
+      svg.classList.toggle('text-gray-300', i >= v);
+      b.classList.toggle('border-yellow-400', i < v);
+    });
+    saveBtn.disabled = !v;
+  }
+  starButtons.forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const v = +b.dataset.value;
+      overallSelect.value = v;
+      paintStars(v);
+    });
+  });
+  paintStars(+overallSelect.value || 0);
+
+  // segmented sub-ratings
+  document.querySelectorAll('.seg').forEach(seg=>{
+    const targetId = seg.dataset.target;
+    const select = document.getElementById(targetId);
+    const btns = seg.querySelectorAll('.seg-btn');
+    function paint(v){
+      btns.forEach(btn=>{
+        const on = (+btn.dataset.value === +v);
+        btn.classList.toggle('bg-gray-900', on);
+        btn.classList.toggle('text-white', on);
+        btn.classList.toggle('border-gray-900', on);
+      });
+    }
+    btns.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        select.value = btn.dataset.value;
+        paint(select.value);
+      });
+    });
+    paint(select.value);
+  });
+
+  // textarea counter
+  const ta = document.getElementById('{{ form.text.id_for_label }}');
+  const counter = document.getElementById('charCount');
+  function updateCount(){ counter.textContent = ta.value.length; }
+  ['input','change'].forEach(e=>ta.addEventListener(e, updateCount));
+  updateCount();
+
+  // photo previews (basic)
+  const input = document.getElementById('{{ form.photos.id_for_label }}');
+  const previews = document.getElementById('previews');
+  function renderPreviews(files){
+    previews.innerHTML = '';
+    Array.from(files).forEach((file, idx)=>{
+      if(!file.type.startsWith('image/')) return;
+      const url = URL.createObjectURL(file);
+      const card = document.createElement('div');
+      card.className = 'relative aspect-square overflow-hidden rounded-xl ring-1 ring-black/5';
+      card.innerHTML = `
+        <img src="${url}" class="h-full w-full object-cover" />
+        <button type="button" data-i="${idx}" class="absolute top-1 right-1 bg-white/90 rounded-lg px-2 py-1 text-xs shadow">Remove</button>
+      `;
+      card.querySelector('button').addEventListener('click', ()=>{
+        const dt = new DataTransfer();
+        Array.from(input.files).forEach((f,i)=>{ if(i!==idx) dt.items.add(f); });
+        input.files = dt.files;
+        renderPreviews(input.files);
+      });
+      previews.appendChild(card);
+    });
+  }
+  input.addEventListener('change', (e)=> renderPreviews(e.target.files));
+</script>
 {% endblock %}

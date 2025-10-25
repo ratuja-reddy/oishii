@@ -1,0 +1,58 @@
+{% comment %}
+Friend button for search results
+Inputs:
+- target_user (required)
+- user_relationship (the relationship data for this specific user)
+{% endcomment %}
+
+{% if request.user.id == target_user.id %}
+  <!-- No button for self -->
+{% else %}
+  {% if user_relationship %}
+    {% if user_relationship.status == 'accepted' %}
+      <!-- Already friends -->
+      <span class="px-3 py-1 rounded-full text-sm bg-green-100 text-green-700">
+        ✓ Friends
+      </span>
+    {% elif user_relationship.status == 'pending' %}
+      {% if user_relationship.is_requester %}
+        <!-- Current user sent the request -->
+        <span class="px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-700">
+          Request Sent
+        </span>
+      {% else %}
+        <!-- Other user sent the request -->
+        <div class="flex gap-1">
+          <form method="post" action="{% url 'accept_friend_request' target_user.id %}" class="inline">
+            {% csrf_token %}
+            <button type="submit"
+                    class="px-2 py-1 rounded-full text-xs bg-green-600 text-white hover:bg-green-700">
+              Accept
+            </button>
+          </form>
+          <form method="post" action="{% url 'reject_friend_request' target_user.id %}" class="inline">
+            {% csrf_token %}
+            <button type="submit"
+                    class="px-2 py-1 rounded-full text-xs bg-red-600 text-white hover:bg-red-700">
+              Reject
+            </button>
+          </form>
+        </div>
+      {% endif %}
+    {% elif user_relationship.status == 'rejected' %}
+      <!-- Request was rejected -->
+      <span class="px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-500">
+        Request Rejected
+      </span>
+    {% endif %}
+  {% else %}
+    <!-- No relationship exists - show add friend button -->
+    <form method="post" action="{% url 'send_friend_request' target_user.id %}" class="inline">
+      {% csrf_token %}
+      <button type="submit"
+              class="px-3 py-1 rounded-full text-sm border text-gray-700 border-gray-300 hover:bg-gray-50">
+        + Add Friend
+      </button>
+    </form>
+  {% endif %}
+{% endif %}

@@ -37,26 +37,41 @@
     </div>
   </div>
 
-  {% if show_action and request.user.id != person.id %}
+  {% if request.user.id != person.id %}
     <div class="ml-auto">
-      <form id="follow-{{ person.id }}"
-            hx-post="{% url 'toggle_follow' person.id %}"
-            hx-target="#follow-{{ person.id }}"
-            hx-swap="outerHTML"
-            class="inline">
-        {% csrf_token %}
-        {% if following_ids and person.id in following_ids %}
-          <button type="submit"
-                  class="px-3 py-1 rounded-full text-sm border text-red-700 border-red-300 hover:bg-red-50">
-            Unfollow
-          </button>
-        {% else %}
-          <button type="submit"
-                  class="px-3 py-1 rounded-full text-sm border text-gray-700 border-gray-300">
-            + Add Friend
-          </button>
-        {% endif %}
-      </form>
+      {% if is_received_request %}
+        <!-- Friend request received - show accept/reject -->
+        <div class="flex gap-2">
+          <form method="post" action="{% url 'accept_friend_request' person.id %}" class="inline">
+            {% csrf_token %}
+            <button type="submit"
+                    class="px-3 py-1 rounded-full text-sm border text-green-700 border-green-300 hover:bg-green-50">
+              ✅
+            </button>
+          </form>
+          <form method="post" action="{% url 'reject_friend_request' person.id %}" class="inline">
+            {% csrf_token %}
+            <button type="submit"
+                    class="px-3 py-1 rounded-full text-sm border text-red-700 border-red-300 hover:bg-red-50">
+              ❌
+            </button>
+          </form>
+        </div>
+      {% elif is_accepted %}
+        <!-- Accepted friend - show delete -->
+        <button type="button"
+                onclick="confirmDeleteFriend('{{ person.username }}', '{% url 'delete_friend' person.id %}')"
+                class="">
+          ❌
+        </button>
+      {% else %}
+        <!-- Pending request - show cancel -->
+        <button type="button"
+                onclick="confirmCancelRequest('{{ person.username }}', '{% url 'cancel_friend_request' person.id %}')"
+                class="">
+          🚫
+        </button>
+      {% endif %}
     </div>
   {% endif %}
 </li>

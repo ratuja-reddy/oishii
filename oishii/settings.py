@@ -2,8 +2,11 @@
 import os
 from pathlib import Path
 from urllib.parse import urlparse
+from dotenv import load_dotenv
 
 import dj_database_url
+
+load_dotenv()
 
 # --------------------------------------------------------------------------------------
 # Core

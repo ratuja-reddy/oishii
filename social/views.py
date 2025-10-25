@@ -11,7 +11,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from places.models import List, Pin, Review
 
 from .forms import ProfileForm, UserEditForm
-from .models import Activity, Comment, Follow, Like, Notification, Profile
+from .models import Activity, Comment, CommentLike, Follow, Friend, Like, Notification, Profile
 
 # ---------- Auth / Profile ----------
 
@@ -44,50 +44,50 @@ def profile_me(request):
 @login_required
 def friends(request):
     me = request.user
-
-    # IDs of people I follow / who follow me
-    following_ids = list(Follow.objects.filter(follower=me).values_list("followee_id", flat=True))
-    follower_ids  = list(Follow.objects.filter(followee=me).values_list("follower_id", flat=True))
-
-    # ---- Restaurants count (choose ONE of these, keep the other commented) ----
-    # If Review.user has related_name="reviews":
-    review_join = "reviews"
-    # If your Review.user has NO related_name (default -> review_set), then use:
-    # review_join = "review_set"
-
-    # People I follow, as User queryset with annotations
-    following_users = (
-        User.objects
-        .filter(id__in=following_ids)
-        .annotate(
-            restaurants_count=Count(f"{review_join}__restaurant", distinct=True),
-            following_count=Count("following", distinct=True),  # Follow rows where this user is follower
-            followers_count=Count("followers", distinct=True),  # Follow rows where this user is followee
-        )
-        .order_by("username")
-    )
-
-    # People who follow me, as User queryset with annotations
-    followers_users = (
-        User.objects
-        .filter(id__in=follower_ids)
-        .annotate(
-            restaurants_count=Count(f"{review_join}__restaurant", distinct=True),
-            following_count=Count("following", distinct=True),
-            followers_count=Count("followers", distinct=True),
-        )
-        .order_by("username")
-    )
-
+    
+    # Get accepted friends (both directions)
+    accepted_friends = Friend.objects.filter(
+        Q(requesting_user=me, status='accepted') | Q(target_user=me, status='accepted')
+    ).select_related('requesting_user__profile', 'target_user__profile').order_by('-updated_at')
+    
+    # Get pending friend requests sent by me
+    pending_requests = Friend.objects.filter(
+        requesting_user=me, status='pending'
+    ).select_related('target_user__profile').order_by('-updated_at')
+    
+    # Get pending friend requests received by me
+    received_requests = Friend.objects.filter(
+        target_user=me, status='pending'
+    ).select_related('requesting_user__profile').order_by('-updated_at')
+    
+    # Extract user objects for accepted friends
+    friends_list = []
+    for friendship in accepted_friends:
+        friend_user = friendship.target_user if friendship.requesting_user == me else friendship.requesting_user
+        friends_list.append({
+            'user': friend_user,
+            'friendship': friendship,
+            'is_accepted': True
+        })
+    
+    # Extract user objects for pending requests
+    pending_list = []
+    for friend_request in pending_requests:
+        pending_list.append({
+            'user': friend_request.target_user,
+            'friendship': friend_request,
+            'is_accepted': False
+        })
+    
     context = {
-        "following_users": following_users,
-        "followers_users": followers_users,
-        "following_count": len(following_ids),
-        "followers_count": len(follower_ids),
-        # keep this so we can still show an action button where needed
-        "following_ids": set(following_ids),
-        "active_tab": "friends",
+        'friends_list': friends_list,
+        'pending_requests': pending_list,
+        'received_requests': received_requests,
+        'friends_count': len(friends_list),
+        'pending_count': len(pending_list),
+        'received_count': received_requests.count(),
     }
+    
     return render(request, "social/friends.html", context)
 
 
@@ -218,6 +218,25 @@ def toggle_like(request, pk):
     return render(request, "social/_like_button.html", {"a": activity})
 
 
+@login_required
+def toggle_comment_like(request, pk):
+    """
+    HTMX endpoint to like/unlike a comment.
+    Returns the replaced comment like button partial.
+    """
+    comment = get_object_or_404(Comment, pk=pk)
+    like, created = CommentLike.objects.get_or_create(user=request.user, comment=comment)
+    if not created:
+        like.delete()
+        liked_by_me = False
+    else:
+        liked_by_me = True
+
+    # Attach flag expected by the partial
+    comment.liked_by_me = liked_by_me
+
+    return render(request, "social/_comment_like_button.html", {"comment": comment})
+
 
 @require_POST
 @login_required
@@ -295,13 +314,137 @@ def toggle_follow(request, user_id: int):
 
 
 @login_required
+@require_http_methods(["POST"])
+def delete_friend(request, user_id: int):
+    """
+    Delete a friendship (for accepted friends).
+    """
+    if request.user.id == user_id:
+        return HttpResponseBadRequest("Cannot delete yourself")
+
+    target = get_object_or_404(User, pk=user_id)
+    
+    # Find the friendship in either direction
+    friendship = Friend.objects.filter(
+        Q(requesting_user=request.user, target_user=target, status='accepted') |
+        Q(requesting_user=target, target_user=request.user, status='accepted')
+    ).first()
+    
+    if friendship:
+        friendship.delete()
+        
+    return redirect('friends')
+
+
+@login_required
+@require_http_methods(["POST"])
+def cancel_friend_request(request, user_id: int):
+    """
+    Cancel a pending friend request that the current user sent.
+    """
+    if request.user.id == user_id:
+        return HttpResponseBadRequest("Cannot cancel request to yourself")
+
+    target = get_object_or_404(User, pk=user_id)
+    
+    # Find the pending friend request sent by current user
+    friendship = Friend.objects.filter(
+        requesting_user=request.user, 
+        target_user=target, 
+        status='pending'
+    ).first()
+    
+    if friendship:
+        friendship.delete()
+        
+    return redirect('friends')
+
+
+@login_required
+@require_http_methods(["POST"])
+def accept_friend_request(request, user_id: int):
+    """
+    Accept a friend request received by the current user.
+    """
+    if request.user.id == user_id:
+        return HttpResponseBadRequest("Cannot accept request from yourself")
+
+    requesting_user = get_object_or_404(User, pk=user_id)
+    
+    # Find the pending friend request received by current user
+    friendship = Friend.objects.filter(
+        requesting_user=requesting_user, 
+        target_user=request.user, 
+        status='pending'
+    ).first()
+    
+    if friendship:
+        friendship.accept()
+        
+    return redirect('friends')
+
+
+@login_required
+@require_http_methods(["POST"])
+def reject_friend_request(request, user_id: int):
+    """
+    Reject a friend request received by the current user.
+    """
+    if request.user.id == user_id:
+        return HttpResponseBadRequest("Cannot reject request from yourself")
+
+    requesting_user = get_object_or_404(User, pk=user_id)
+    
+    # Find the pending friend request received by current user
+    friendship = Friend.objects.filter(
+        requesting_user=requesting_user, 
+        target_user=request.user, 
+        status='pending'
+    ).first()
+    
+    if friendship:
+        friendship.reject()
+        
+    return redirect('friends')
+
+
+@login_required
+@require_http_methods(["POST"])
+def send_friend_request(request, user_id: int):
+    """
+    Send a friend request to another user.
+    """
+    if request.user.id == user_id:
+        return HttpResponseBadRequest("Cannot send friend request to yourself")
+
+    target_user = get_object_or_404(User, pk=user_id)
+    
+    # Check if any friendship already exists between these users
+    existing_friendship = Friend.objects.filter(
+        Q(requesting_user=request.user, target_user=target_user) |
+        Q(requesting_user=target_user, target_user=request.user)
+    ).first()
+    
+    if not existing_friendship:
+        # Create new friend request
+        Friend.objects.create(
+            requesting_user=request.user,
+            target_user=target_user,
+            status='pending'
+        )
+    
+    # Return to the find friends page
+    return redirect('friends_find')
+
+
+@login_required
 def find_friends(request):
     """
     Renders the Find Friends page and performs search when ?q= is present.
     """
     q = (request.GET.get("q") or "").strip()
 
-    users = None
+    users_with_relationships = []
     if q:
         users = (User.objects
                  .exclude(id=request.user.id)
@@ -313,14 +456,42 @@ def find_friends(request):
                  )
                  .order_by("username")[:25])
 
-    following_ids = set(
-        Follow.objects.filter(follower=request.user).values_list("followee_id", flat=True)
-    )
+        # Get friend relationships for the current user
+        if users:
+            user_ids = [u.id for u in users]
+            
+            # Get all friend relationships involving current user and search results
+            friend_relationships = {}
+            friends = Friend.objects.filter(
+                (Q(requesting_user=request.user, target_user__in=user_ids) |
+                 Q(requesting_user__in=user_ids, target_user=request.user))
+            )
+            
+            for friend in friends:
+                if friend.requesting_user == request.user:
+                    # Current user sent the request
+                    friend_relationships[friend.target_user.id] = {
+                        'status': friend.status,
+                        'is_requester': True
+                    }
+                else:
+                    # Other user sent the request
+                    friend_relationships[friend.requesting_user.id] = {
+                        'status': friend.status,
+                        'is_requester': False
+                    }
+            
+            # Combine users with their relationship data
+            for user in users:
+                users_with_relationships.append({
+                    'user': user,
+                    'relationship': friend_relationships.get(user.id)
+                })
 
     return render(
         request,
         "social/friends_find.html",
-        {"q": q, "users": users, "following_ids": following_ids}
+        {"q": q, "users_with_relationships": users_with_relationships}
     )
 
 @login_required

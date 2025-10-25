@@ -42,6 +42,7 @@ static/css/app.css
 
 # Env
 .env
+.env.*
 .venv/
 
 # PyInstaller

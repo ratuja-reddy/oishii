@@ -1,8 +1,11 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import models
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_http_methods
+import os
 
 from .forms import ReviewForm
 from .models import List, Photo, Pin, Restaurant, Review
@@ -98,11 +101,28 @@ def my_restaurants(request):
 
 
 def discover(request):
-    restaurants = Restaurant.objects.order_by("-id")[:24]
+    search_query = request.GET.get('search', '').strip()
+    
+    if search_query:
+        # Search in name, cuisine, city, and address
+        restaurants = Restaurant.objects.filter(
+            models.Q(name__icontains=search_query) |
+            models.Q(cuisine__icontains=search_query) |
+            models.Q(city__icontains=search_query) |
+            models.Q(address__icontains=search_query)
+        ).order_by("-id")[:24]
+    else:
+        restaurants = Restaurant.objects.order_by("-id")[:24]
+    
     return render(
         request,
         "places/discover.html",
-        {"restaurants": restaurants, "active_tab": "discover"},
+        {
+            "restaurants": restaurants, 
+            "active_tab": "discover",
+            "search_query": search_query,
+            "API_KEY": os.getenv("GOOGLE_MAPS_API_KEY")
+        },
     )
 
 
@@ -136,7 +156,7 @@ def review_tab(request):
                 Photo.objects.create(review=review, image=photo)
 
             messages.success(request, "Review saved!")
-            return redirect("review_tab")
+            return redirect("places:review_thanks")
     else:
         form = ReviewForm(user=request.user)
 
@@ -173,7 +193,7 @@ def review_create_for_restaurant(request, pk):
                 Photo.objects.create(review=review, image=photo)
 
             messages.success(request, "Review saved!")
-            return redirect("places:restaurant_detail", pk=restaurant.pk)
+            return redirect("places:review_thanks")
     else:
         form = ReviewForm(instance=instance, user=request.user)
         form.fields["restaurant"].initial = restaurant
@@ -367,3 +387,13 @@ def delete_list(request, list_id):
 
     # Normal navigation fallback
     return redirect("my_restaurants")
+
+
+@login_required
+def review_thanks(request):
+    """Thank you page after posting a review with auto-redirect to home feed."""
+    return render(
+        request,
+        "places/review_thanks.html",
+        {"active_tab": "home"},
+    )

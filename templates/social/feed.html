@@ -165,10 +165,15 @@
               {% else %}
                 <div class="h-8 w-8 rounded-full bg-gray-200 flex-shrink-0"></div>
               {% endif %}
-              <div class="bg-gray-50 rounded-2xl px-3 py-2 text-sm max-w-full">
-                <span class="font-medium">{{ c.user.username }}</span>
-                <span class="text-gray-800 break-words">{{ c.text }}</span>
-                <div class="text-[11px] text-gray-400 mt-0.5">{{ c.created_at|date:"M j, H:i" }}</div>
+              <div class="bg-gray-50 rounded-2xl px-3 py-2 text-sm max-w-full flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium">{{ c.user.username }}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] text-gray-400">{{ c.created_at|date:"M j, H:i" }}</span>
+                    {% include "social/_comment_like_button.html" with comment=c %}
+                  </div>
+                </div>
+                <div class="text-gray-800 break-words mt-1">{{ c.text }}</div>
               </div>
             </div>
           {% endfor %}
@@ -197,6 +202,10 @@
       <div class="text-gray-900 font-semibold text-lg">Your feed is empty</div>
       <p class="text-gray-600 mt-1">Follow some friends or post a review to get started.</p>
       <div class="mt-4 flex items-center justify-center gap-3">
+        <a href="{% url 'friends_find' %}"
+           class="px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-800 hover:bg-gray-50">
+          Add friends
+        </a>
         <a href="{% url 'discover' %}"
            class="px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-800 hover:bg-gray-50">
           Discover places
