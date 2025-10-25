@@ -5,6 +5,44 @@
   <p class="text-gray-600 text-sm">Explore new restaurants and hidden gems</p>
 </div>
 
+<!-- Search Bar -->
+<div class="mb-6">
+  <form method="GET" action="{% url 'discover' %}" class="relative">
+    <div class="relative">
+      <input 
+        type="text" 
+        name="search" 
+        value="{{ search_query|default:'' }}"
+        placeholder="Search restaurants by name, cuisine, city, or address..."
+        class="w-full px-4 py-3 pl-10 pr-4 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      />
+      <div class="absolute inset-y-0 left-0 flex items-center pl-3">
+        <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+      </div>
+      {% if search_query %}
+        <button 
+          type="button" 
+          onclick="clearSearch()"
+          class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+        >
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<script>
+  function clearSearch() {
+    const form = document.querySelector('form');
+    const input = form.querySelector('input[name="search"]');
+    input.value = '';
+    form.submit();
+  }
+</script>
+
+{% include "scripts/google_maps.html" with api_key=API_KEY %}
+
 {% if restaurants %}
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     {% for r in restaurants %}

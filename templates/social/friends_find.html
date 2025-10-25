@@ -25,17 +25,18 @@
 
   <!-- Results -->
   <div class="mt-4">
-    {% if users is None and not q %}
+    {% if not users_with_relationships and not q %}
       <div class="text-sm text-gray-500">Type a query and press Search.</div>
-    {% elif users and users.exists %}
+    {% elif users_with_relationships %}
       <ul class="divide-y divide-gray-100">
-        {% for u in users %}
+        {% for user_data in users_with_relationships %}
+          {% with u=user_data.user %}
           <li class="py-3 flex items-center gap-3">
             {% if u.profile and u.profile.avatar %}
               <img src="{{ u.profile.avatar.url }}" alt="{{ u.username }} avatar"
                    class="h-8 w-8 rounded-full object-cover ring-1 ring-white shadow-sm">
             {% else %}
-              <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+              <dMiv class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
                 {{ u.username|first|upper }}
               </div>
             {% endif %}
@@ -49,9 +50,10 @@
             </div>
 
             <div class="ml-auto">
-              {% include "social/_follow_button.html" with target_user=u following_ids=following_ids %}
+              {% include "social/_friend_button.html" with target_user=u user_relationship=user_data.relationship %}
             </div>
           </li>
+          {% endwith %}
         {% endfor %}
       </ul>
     {% else %}

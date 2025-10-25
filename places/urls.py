@@ -10,5 +10,6 @@ urlpatterns = [
     path("r/<int:pk>/pin/", views.toggle_pin, name="toggle_pin"),
     path("r/<int:pk>/review/", views.review_create_for_restaurant, name="review_for_restaurant"),
     path("review/<int:pk>/edit/", views.review_edit, name="review_edit"),
+    path("review/thanks/", views.review_thanks, name="review_thanks"),
     path("photo/<int:pk>/delete/", views.photo_delete, name="photo_delete"),
 ]

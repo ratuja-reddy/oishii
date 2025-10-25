@@ -7,7 +7,7 @@
 
   <!-- Header -->
   <div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-bold">Friends & Follows</h1>
+    <h1 class="text-2xl font-bold">Friends</h1>
     <a href="{% url 'friends_find' %}"
        class="text-sm px-3 py-1 rounded-full border border-gray-300 hover:bg-gray-50">
       + Find Friends
@@ -16,8 +16,13 @@
 
   <!-- Counts -->
   <div class="mb-3 text-sm text-gray-600">
-    <span class="font-semibold">{{ following_count }}</span> friends you follow
-    • <span class="font-semibold">{{ followers_count }}</span> followers
+    <span class="font-semibold">{{ friends_count }}</span> {% if friends_count == 1 %}friend{% else %}friends{% endif %}
+    {% if pending_count > 0 %}
+      • <span class="font-semibold">{{ pending_count }}</span> pending request{% if pending_count != 1 %}s{% endif %}
+    {% endif %}
+    {% if received_count > 0 %}
+      • <span class="font-semibold">{{ received_count }}</span> received request{% if received_count != 1 %}s{% endif %}
+    {% endif %}
   </div>
 
   <!-- Search -->
@@ -30,33 +35,96 @@
     </button>
   </form>
 
-  <!-- Following list -->
-  <section class="mb-8">
-    <h2 class="text-lg font-semibold mb-2">Following</h2>
-    {% if following_users %}
-      <ul class="bg-white rounded-2xl shadow divide-y divide-gray-100">
-        {% for person in following_users %}
-          {% include "social/_friend_row.html" with person=person following_ids=following_ids %}
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="text-gray-500 text-sm">You’re not following anyone yet.</p>
-    {% endif %}
+  <!-- Received Friend Requests -->
+  {% if received_requests %}
+  <section class="mb-6">
+    <h2 class="text-lg font-semibold mb-2">Friend Requests</h2>
+    <ul class="bg-white rounded-2xl shadow divide-y divide-gray-100">
+      {% for request in received_requests %}
+        {% include "social/_friend_row.html" with person=request.requesting_user friendship=request is_received_request=True %}
+      {% endfor %}
+    </ul>
   </section>
+  {% endif %}
 
-  <!-- Followers list -->
-  <section>
-    <h2 class="text-lg font-semibold mb-2">Followers</h2>
-    {% if followers_users %}
+  <!-- Pending Friend Requests -->
+  {% if pending_requests %}
+  <section class="mb-6">
+    <h2 class="text-lg font-semibold mb-2">Pending Requests</h2>
+    <ul class="bg-white rounded-2xl shadow divide-y divide-gray-100">
+      {% for request_data in pending_requests %}
+        {% include "social/_friend_row.html" with person=request_data.user friendship=request_data.friendship is_accepted=request_data.is_accepted %}
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  <!-- Friends -->
+  <section class="mb-6">
+    <h2 class="text-lg font-semibold mb-2">Friends</h2>
+    {% if friends_list %}
       <ul class="bg-white rounded-2xl shadow divide-y divide-gray-100">
-        {% for person in following_users %}
-          {% include "social/_friend_row.html" with person=person following_ids=following_ids %}
+        {% for friend_data in friends_list %}
+          {% include "social/_friend_row.html" with person=friend_data.user friendship=friend_data.friendship is_accepted=friend_data.is_accepted %}
         {% endfor %}
       </ul>
+        <div class="flex">
+          <p class="mx-auto p-5 text-gray-500">
+            Add more friends <a class="underline" href="{% url 'friends_find' %}">here</a>
+          </p>
+
+        </div>
+    </a>
     {% else %}
-      <p class="text-gray-500 text-sm">No followers yet.</p>
+      <p class="text-gray-500 text-sm">No friends yet.</p>
+      <a href="{% url 'friends_find' %}"
+        class="text-sm px-3 py-1 rounded-full border border-gray-300 hover:bg-gray-50">
+        + Find Friends
+      </a>
     {% endif %}
   </section>
 
 </div>
+
+<script>
+function confirmDeleteFriend(username, deleteUrl) {
+  if (confirm(`Are you sure you want to delete ${username} from your friends? This action cannot be undone.`)) {
+    // Create and submit a form
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = deleteUrl;
+    
+    // Add CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+
+function confirmCancelRequest(username, cancelUrl) {
+  if (confirm(`Are you sure you want to cancel your friend request to ${username}?`)) {
+    // Create and submit a form
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = cancelUrl;
+    
+    // Add CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+</script>
 {% endblock %}

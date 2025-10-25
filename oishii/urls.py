@@ -27,8 +27,14 @@ urlpatterns = [
     path("friends/", sviews.friends, name="friends"),
     path("friends/find/", sviews.find_friends, name="friends_find"),                 # page
     path("friends/find/search/", sviews.find_friends_search, name="friends_find_search"),  # HTMX results
+    path("friends/delete/<int:user_id>/", sviews.delete_friend, name="delete_friend"),     # Delete friend
+    path("friends/cancel/<int:user_id>/", sviews.cancel_friend_request, name="cancel_friend_request"),  # Cancel request
+    path("friends/accept/<int:user_id>/", sviews.accept_friend_request, name="accept_friend_request"),  # Accept request
+    path("friends/reject/<int:user_id>/", sviews.reject_friend_request, name="reject_friend_request"),  # Reject request
+    path("friends/send/<int:user_id>/", sviews.send_friend_request, name="send_friend_request"),        # Send friend request
     path("social/follow/<int:user_id>/", sviews.toggle_follow, name="toggle_follow"),      # HTMX toggle
     path("social/like/<int:pk>/", sviews.toggle_like, name="toggle_like"),
+    path("social/comment-like/<int:pk>/", sviews.toggle_comment_like, name="toggle_comment_like"),
     path("activity/<int:activity_id>/comment/", sviews.add_comment, name="add_comment"),
     # notifications
     path("notifications/", sviews.notifications, name="notifications"),

@@ -2,6 +2,55 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+class Friend(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("accepted", "Accepted"),
+        ("rejected", "Rejected"),
+    ]
+    
+    requesting_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="friend_requests_sent"
+    )
+    target_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="friend_requests_received"
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("requesting_user", "target_user")
+
+    def __str__(self):
+        return f"{self.requesting_user} → {self.target_user} ({self.status})"
+    
+    def accept(self):
+        """Accept the friend request."""
+        self.status = "accepted"
+        self.save()
+    
+    def reject(self):
+        """Reject the friend request."""
+        self.status = "rejected"
+        self.save()
+    
+    def is_accepted(self):
+        """Check if the friend request is accepted."""
+        return self.status == "accepted"
+    
+    def is_pending(self):
+        """Check if the friend request is pending."""
+        return self.status == "pending"
+    
+    def is_rejected(self):
+        """Check if the friend request is rejected."""
+        return self.status == "rejected"
+
 
 class Follow(models.Model):
     follower = models.ForeignKey(
@@ -53,6 +102,18 @@ class Comment(models.Model):
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="comments")
     text = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
+
+
+class CommentLike(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="likes")
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        unique_together = ("user", "comment")
+
+    def __str__(self):
+        return f"{self.user.username} likes comment {self.comment.id}"
 
 
 class Notification(models.Model):
