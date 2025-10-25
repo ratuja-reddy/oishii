@@ -49,11 +49,9 @@ class ProfileForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Limit favorite spots to restaurants the user has reviewed
-        from places.models import Review
-        if self.instance and self.instance.user:
-            reviewed_restaurants = Review.objects.filter(user=self.instance.user).values_list('restaurant', flat=True)
-            self.fields['favorite_spots'].queryset = self.fields['favorite_spots'].queryset.filter(id__in=reviewed_restaurants)
+        # Allow selection from all restaurants
+        from places.models import Restaurant
+        self.fields['favorite_spots'].queryset = Restaurant.objects.all().order_by('name')
     
     def clean_favorite_spots(self):
         spots = self.cleaned_data.get('favorite_spots')

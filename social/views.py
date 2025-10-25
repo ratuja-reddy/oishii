@@ -41,6 +41,19 @@ def profile_me(request):
     """Basic profile page; shows lists via reverse relation if present."""
     U = get_user_model()
     me = get_object_or_404(U, pk=request.user.id)
+    
+    # Handle favorite spots form submission
+    if request.method == "POST" and "favorite_spots" in request.POST:
+        profile, _ = Profile.objects.get_or_create(user=me)
+        favorite_spots_ids = request.POST.getlist('favorite_spots')
+        if len(favorite_spots_ids) > 3:
+            messages.error(request, "You can only select up to 3 favorite spots.")
+        else:
+            from places.models import Restaurant
+            favorite_spots = Restaurant.objects.filter(id__in=favorite_spots_ids)
+            profile.favorite_spots.set(favorite_spots)
+            messages.success(request, "Favorite spots updated!")
+        return redirect("profile_me")
     # If you registered List in places, Django will create me.list_set
     lists = getattr(me, "list_set", None).all().order_by("title") if hasattr(me, "list_set") else []
     
@@ -114,6 +127,10 @@ def profile_me(request):
         'favorite_spots': profile.favorite_spots.all() if profile else [],
     }
     
+    # Get all restaurants for the dropdown
+    from places.models import Restaurant
+    all_restaurants = Restaurant.objects.all().order_by('name')
+    
     return render(
         request,
         "social/profile_me.html",
@@ -123,6 +140,7 @@ def profile_me(request):
             "active_tab": "profile",
             "activities": activities,
             "stats": stats,
+            "all_restaurants": all_restaurants,
         },
     )
 
