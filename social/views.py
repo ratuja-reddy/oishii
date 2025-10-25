@@ -405,9 +405,11 @@ def mark_notification_read(request, notification_id):
 
 @login_required
 def notification_count(request):
-    """Get count of unread notifications."""
-    count = request.user.notifications.filter(is_read=False).count()
+    """Get count of unread notifications (not friend requests)."""
+    # Only count actual notifications, not friend requests
+    count = Notification.objects.filter(user=request.user, is_read=False).count()
     return JsonResponse({"count": count})
+
 
 # ---------- Follow (HTMX) ----------
 
@@ -526,7 +528,7 @@ def accept_friend_request(request, user_id: int):
         }
         
         response = render(request, "social/_requests_content.html", context)
-        response['HX-Trigger'] = 'showToast'
+        response['HX-Trigger'] = 'showToast,updateNotificationCount'
         return response
     
     return redirect('friends')
@@ -569,7 +571,9 @@ def reject_friend_request(request, user_id: int):
             'pending_requests': pending_requests,
         }
         
-        return render(request, "social/_requests_content.html", context)
+        response = render(request, "social/_requests_content.html", context)
+        response['HX-Trigger'] = 'updateNotificationCount'
+        return response
     
     return redirect('friends')
 
@@ -691,6 +695,9 @@ def notifications(request):
     """Dedicated notifications page with tabs for Notifications and Requests"""
     me = request.user
     
+    # Mark all notifications as read when user visits the notifications page
+    Notification.objects.filter(user=me, is_read=False).update(is_read=True)
+    
     # Get all notifications for the user
     notifications = (
         Notification.objects
@@ -713,7 +720,7 @@ def notifications(request):
         'notifications': notifications,
         'friend_requests': friend_requests,
         'pending_requests': pending_requests,
-        'notifications_count': notifications.filter(is_read=False).count(),
+        'notifications_count': 0,  # All notifications are now read
         'requests_count': friend_requests.count(),
     }
     

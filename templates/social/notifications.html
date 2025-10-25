@@ -36,8 +36,8 @@
     {% if notifications %}
       <div class="space-y-4">
         {% for notification in notifications %}
-          <div class="bg-white rounded-lg border border-gray-200 p-4 hover:bg-gray-50 transition-colors cursor-pointer" 
-               onclick="window.location.href='{% url 'places:restaurant_detail' notification.activity.restaurant.id %}#activity-{{ notification.activity.id }}'">
+          <div class="bg-white rounded-lg border border-gray-200 p-4 hover:bg-gray-50 transition-colors cursor-pointer {% if not notification.is_read %}border-l-4 border-l-indigo-500{% endif %}" 
+               onclick="handleNotificationClick({{ notification.id }}, '{% url 'places:restaurant_detail' notification.activity.restaurant.id %}#activity-{{ notification.activity.id }}')">
             <div class="flex items-start gap-3">
               <!-- Avatar -->
               <div class="flex-shrink-0">
@@ -150,6 +150,64 @@ function showToast(message) {
 document.addEventListener('showToast', function(event) {
   showToast('Friend Request Approved');
 });
+
+document.addEventListener('updateNotificationCount', function(event) {
+  updateNotificationCount();
+});
+
+// Notifications are automatically marked as read when the page loads (server-side)
+
+// Handle notification click - just redirect, don't mark as read
+function handleNotificationClick(notificationId, redirectUrl) {
+  // Just redirect to the review
+  window.location.href = redirectUrl;
+}
+
+// Mark notification as read and update count
+function markNotificationRead(notificationId) {
+  fetch(`/notifications/${notificationId}/read/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      'Content-Type': 'application/json',
+    },
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'success') {
+      // Update the notification count in the bell
+      updateNotificationCount();
+    }
+  })
+  .catch(error => console.error('Error marking notification as read:', error));
+}
+
+// Update notification count in the bell
+function updateNotificationCount() {
+  fetch('/notifications/count/')
+    .then(response => response.json())
+    .then(data => {
+      console.log('Updated notification count:', data.count);
+      const notificationBadge = document.getElementById('notification-badge');
+      const notificationCount = document.getElementById('notification-count');
+      const notificationBell = document.getElementById('notification-bell');
+      
+      // Only update if elements exist (they're on the feed page, not notifications page)
+      if (notificationBadge && notificationCount && notificationBell) {
+        if (data.count > 0) {
+          notificationBadge.classList.remove('hidden');
+          notificationCount.textContent = data.count;
+          notificationBell.classList.add('text-indigo-600');
+          notificationBell.classList.remove('text-gray-600');
+        } else {
+          notificationBadge.classList.add('hidden');
+          notificationBell.classList.remove('text-indigo-600');
+          notificationBell.classList.add('text-gray-600');
+        }
+      }
+    })
+    .catch(error => console.error('Error updating notification count:', error));
+}
 </script>
 
 {% endblock %}
