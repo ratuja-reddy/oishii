@@ -18,6 +18,27 @@
     {{ form.overall_rating }}
   </div>
 
+  <div>
+    <label class="block text-sm font-medium">Would you go again?</label>
+    <div class="flex gap-4 mt-2">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="radio" name="{{ form.would_go_again.name }}" value="True" 
+               {% if form.would_go_again.value == True %}checked{% endif %}
+               class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+        <span class="text-lg">👍</span>
+        <span class="text-sm text-gray-700">Yes</span>
+      </label>
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="radio" name="{{ form.would_go_again.name }}" value="False" 
+               {% if form.would_go_again.value == False %}checked{% endif %}
+               class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+        <span class="text-lg">👎</span>
+        <span class="text-sm text-gray-700">No</span>
+      </label>
+    </div>
+    {% if form.would_go_again.errors %}<p class="text-sm text-red-600 mt-1">{{ form.would_go_again.errors|join:", " }}</p>{% endif %}
+  </div>
+
   <div class="grid grid-cols-2 gap-3">
     <div>
       <label class="block text-sm">Food (optional)</label>

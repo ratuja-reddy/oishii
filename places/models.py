@@ -100,6 +100,7 @@ class Review(models.Model):
     )
 
     overall_rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
+    would_go_again = models.BooleanField(default=True, help_text="Would you go again?")
 
     # Optional sub-ratings
     food = models.PositiveSmallIntegerField(choices=RATING_CHOICES, null=True, blank=True)

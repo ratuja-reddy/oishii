@@ -22,6 +22,21 @@ class MultipleFileField(forms.FileField):
         return result
 
 
+class EmojiRadioSelect(forms.RadioSelect):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.attrs.update({'class': 'flex gap-4'})
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        # Add emoji to the label
+        if value == 'True':
+            option['label'] = f'👍 {label}'
+        elif value == 'False':
+            option['label'] = f'👎 {label}'
+        return option
+
+
 class ReviewForm(forms.ModelForm):
     photos = MultipleFileField(
         widget=MultipleFileInput(attrs={
@@ -33,9 +48,15 @@ class ReviewForm(forms.ModelForm):
         help_text="Upload photos of your meal or the restaurant (optional)"
     )
 
+    would_go_again = forms.BooleanField(
+        widget=EmojiRadioSelect(choices=[(True, 'Yes'), (False, 'No')]),
+        label="Would you go again?",
+        required=True
+    )
+
     class Meta:
         model = Review
-        fields = ["restaurant", "overall_rating", "food", "service", "value", "atmosphere", "text"]
+        fields = ["restaurant", "overall_rating", "would_go_again", "food", "service", "value", "atmosphere", "text"]
         widgets = {
             "restaurant": forms.Select(attrs={"class": "w-full border rounded-xl px-3 py-2"}),
             "overall_rating": forms.Select(attrs={"class": "w-full border rounded-xl px-3 py-2"}),
