@@ -1,0 +1,57 @@
+{% comment %}
+Friend button for profile pages
+Inputs:
+- person (the user whose profile is being viewed)
+- is_friend (boolean)
+- is_pending_request (boolean)
+- friendship (the friendship object)
+{% endcomment %}
+
+{% if is_friend %}
+  <!-- Already friends -->
+  <form method="post" action="{% url 'delete_friend' person.id %}" class="inline">
+    {% csrf_token %}
+    <button type="submit" 
+            class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white text-gray-700 hover:bg-gray-50">
+      Remove Friend
+    </button>
+  </form>
+{% elif is_pending_request %}
+  {% if friendship.requesting_user == request.user %}
+    <!-- Current user sent the request -->
+    <span class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white text-gray-500">
+      Request Sent
+    </span>
+  {% else %}
+    <!-- Other user sent the request -->
+    <div class="flex gap-2">
+      <form method="post" action="{% url 'accept_friend_request' person.id %}" class="inline">
+        {% csrf_token %}
+        <button type="submit"
+                class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white text-green-700 hover:bg-green-50">
+          Accept
+        </button>
+      </form>
+      <form method="post" action="{% url 'reject_friend_request' person.id %}" class="inline">
+        {% csrf_token %}
+        <button type="submit"
+                class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white text-red-700 hover:bg-red-50">
+          Reject
+        </button>
+      </form>
+    </div>
+  {% endif %}
+{% else %}
+  <!-- No relationship exists - show add friend button -->
+  <form method="post" action="{% url 'send_friend_request' person.id %}" 
+        hx-post="{% url 'send_friend_request' person.id %}"
+        hx-target="#friend-button-container"
+        hx-swap="outerHTML"
+        class="inline">
+    {% csrf_token %}
+    <button type="submit" 
+            class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white hover:bg-gray-50">
+      Add Friend
+    </button>
+  </form>
+{% endif %}
