@@ -112,9 +112,9 @@ def discover(request):
             models.Q(cuisine__icontains=search_query) |
             models.Q(city__icontains=search_query) |
             models.Q(address__icontains=search_query)
-        ).order_by("-id")[:24]
+        ).order_by("-id")
     else:
-        restaurants = Restaurant.objects.order_by("-id")[:24]
+        restaurants = Restaurant.objects.order_by("-id")
 
     # Get restaurants with coordinates for the map
     restaurants_with_coords = Restaurant.objects.filter(
