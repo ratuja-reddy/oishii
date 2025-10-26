@@ -35,7 +35,7 @@
       <div class="space-y-4">
         {% for notification in notifications %}
           <div class="bg-white rounded-lg border border-gray-200 p-4 hover:bg-gray-50 transition-colors cursor-pointer {% if not notification.is_read %}border-l-4 border-l-indigo-500{% endif %}" 
-               onclick="handleNotificationClick({{ notification.id }}, '{% url 'places:restaurant_detail' notification.activity.restaurant.id %}#activity-{{ notification.activity.id }}')">
+               onclick="handleNotificationClick({{ notification.id }}, '{% if notification.notification_type == 'review_like' or notification.notification_type == 'comment_like' %}{% url 'notification_review' notification.activity.id %}{% else %}{% url 'places:restaurant_detail' notification.activity.restaurant.id %}#activity-{{ notification.activity.id }}{% endif %}')">
             <div class="flex items-start gap-3">
               <!-- Avatar -->
               <div class="flex-shrink-0">

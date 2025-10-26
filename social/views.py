@@ -412,6 +412,50 @@ def notification_count(request):
     return JsonResponse({"count": total_count})
 
 
+@login_required
+def notification_review(request, activity_id):
+    """Show a single review in feed format when clicked from notification."""
+    activity = get_object_or_404(Activity, id=activity_id)
+    
+    # Mark the notification as read if it exists
+    Notification.objects.filter(
+        user=request.user, 
+        activity=activity,
+        notification_type__in=['review_like', 'comment_like']
+    ).update(is_read=True)
+    
+    # Get the review and related data
+    review = activity.review
+    if not review:
+        return redirect('feed')
+    
+    # Get comments for this activity
+    comments = Comment.objects.filter(activity=activity).select_related('user', 'user__profile').order_by('created_at')
+    
+    # Get likes for this activity
+    likes = Like.objects.filter(activity=activity).select_related('user', 'user__profile')
+    
+    # Get comment likes
+    comment_likes = CommentLike.objects.filter(comment__activity=activity).select_related('user', 'user__profile')
+    
+    # Get user's liked activities and comments for template
+    user_liked_activities = set(Like.objects.filter(user=request.user, activity=activity).values_list('activity_id', flat=True))
+    user_liked_comments = set(CommentLike.objects.filter(user=request.user, comment__activity=activity).values_list('comment_id', flat=True))
+    
+    context = {
+        'activity': activity,
+        'review': review,
+        'comments': comments,
+        'likes': likes,
+        'comment_likes': comment_likes,
+        'user_liked_activities': user_liked_activities,
+        'user_liked_comments': user_liked_comments,
+        'show_back_button': True,
+    }
+    
+    return render(request, "social/notification_review.html", context)
+
+
 # ---------- Follow (HTMX) ----------
 
 User = get_user_model()

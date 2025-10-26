@@ -40,6 +40,7 @@ urlpatterns = [
     path("notifications/", sviews.notifications, name="notifications"),
     path("notifications/count/", sviews.notification_count, name="notification_count"),
     path("notifications/<int:notification_id>/read/", sviews.mark_notification_read, name="mark_notification_read"),
+    path("notification-review/<int:activity_id>/", sviews.notification_review, name="notification_review"),
     path("me/", sviews.profile_me, name="profile_me"),
     path("me/edit/", sviews.edit_profile, name="edit_profile"),
     path("u/<str:username>/", sviews.profile_public, name="profile_public"),
