@@ -124,20 +124,20 @@ class Notification(models.Model):
         ('review_like', 'Review Like'),
         ('comment_like', 'Comment Like'),
     ]
-    
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='comment')
-    
+
     # For comment notifications
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="notifications", null=True, blank=True)
-    
+
     # For like notifications
     like = models.ForeignKey(Like, on_delete=models.CASCADE, related_name="notifications", null=True, blank=True)
     comment_like = models.ForeignKey(CommentLike, on_delete=models.CASCADE, related_name="notifications", null=True, blank=True)
-    
+
     # Always have activity for context
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="notifications")
-    
+
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
 

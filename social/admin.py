@@ -22,7 +22,7 @@ class NotificationAdmin(admin.ModelAdmin):
     search_fields = ("user__username", "comment__user__username", "like__user__username", "comment_like__user__username")
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)
-    
+
     def get_content_preview(self, obj):
         """Show a preview of the notification content"""
         if obj.notification_type == 'comment':
@@ -32,5 +32,5 @@ class NotificationAdmin(admin.ModelAdmin):
         elif obj.notification_type == 'comment_like':
             return f"Comment like by {obj.comment_like.user.username if obj.comment_like else 'N/A'}"
         return "Unknown"
-    
+
     get_content_preview.short_description = "Content Preview"

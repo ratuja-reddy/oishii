@@ -5,7 +5,7 @@ from django.dispatch import receiver
 
 from places.models import List
 
-from .models import Profile, Notification, Like, CommentLike
+from .models import CommentLike, Like, Notification, Profile
 
 User = get_user_model()
 
