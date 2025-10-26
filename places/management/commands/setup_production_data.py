@@ -1,7 +1,5 @@
 import os
 import csv
-import requests
-import time
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from places.models import Restaurant
@@ -14,7 +12,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--csv-file',
             type=str,
-            default='scripts/london_trendy_restaurants_100_with_addresses.csv',
+            default='scripts/london_trendy_restaurants_100_with_coordinates.csv',
             help='Path to the CSV file containing restaurant data'
         )
 
@@ -30,7 +28,6 @@ class Command(BaseCommand):
         self.stdout.write('Setting up production restaurant data...')
         
         imported_count = 0
-        geocoded_count = 0
         skipped_count = 0
 
         with transaction.atomic():
@@ -44,8 +41,10 @@ class Command(BaseCommand):
                     website = row.get('website', '').strip()
                     price = row.get('price', '').strip()
                     category = row.get('category', 'restaurant').strip()
+                    lat_str = row.get('lat', '').strip()
+                    lon_str = row.get('lon', '').strip()
                     
-                    if not name or not address:
+                    if not name:
                         continue
                     
                     # Check if restaurant already exists (by name)
@@ -54,18 +53,24 @@ class Command(BaseCommand):
                         self.stdout.write(f'Skipped existing: {name}')
                         continue
                     
-                    # Extract city from address
-                    city = self.extract_city_from_address(address)
-                    
-                    # Geocode address
-                    lat_float, lon_float = self.geocode_address(address)
-                    if not lat_float:
+                    # Parse coordinates from CSV
+                    try:
+                        lat_float = float(lat_str) if lat_str else None
+                        lon_float = float(lon_str) if lon_str else None
+                    except (ValueError, TypeError):
                         self.stdout.write(
-                            self.style.WARNING(f'Failed to geocode: {name} at {address}')
+                            self.style.WARNING(f'Invalid coordinates for {name}: lat={lat_str}, lon={lon_str}')
                         )
                         continue
                     
-                    geocoded_count += 1
+                    if not lat_float or not lon_float:
+                        self.stdout.write(
+                            self.style.WARNING(f'Missing coordinates for {name}')
+                        )
+                        continue
+                    
+                    # Extract city from address
+                    city = self.extract_city_from_address(address)
                     
                     # Create restaurant
                     Restaurant.objects.create(
@@ -80,14 +85,11 @@ class Command(BaseCommand):
                         category=category
                     )
                     imported_count += 1
-                    
-                    # Small delay to respect rate limits
-                    time.sleep(0.1)
 
         self.stdout.write(
             self.style.SUCCESS(
                 f'Production setup completed: {imported_count} restaurants imported, '
-                f'{skipped_count} skipped, {geocoded_count} geocoded'
+                f'{skipped_count} skipped'
             )
         )
 
@@ -124,37 +126,3 @@ class Command(BaseCommand):
         
         return 'London'
 
-    def geocode_address(self, address):
-        """Geocode an address using Google Maps Geocoding API"""
-        api_key = os.getenv('GOOGLE_MAPS_API_KEY')
-        if not api_key:
-            self.stdout.write(
-                self.style.ERROR('GOOGLE_MAPS_API_KEY not set. Cannot geocode addresses.')
-            )
-            return None, None
-        
-        try:
-            url = f'https://maps.googleapis.com/maps/api/geocode/json'
-            params = {
-                'address': address,
-                'key': api_key
-            }
-            
-            response = requests.get(url, params=params, timeout=10)
-            response.raise_for_status()
-            data = response.json()
-            
-            if data['status'] == 'OK' and data['results']:
-                location = data['results'][0]['geometry']['location']
-                return location['lat'], location['lng']
-            else:
-                self.stdout.write(
-                    self.style.WARNING(f'Geocoding failed for "{address}": {data.get("status", "Unknown error")}')
-                )
-                return None, None
-                
-        except requests.RequestException as e:
-            self.stdout.write(
-                self.style.ERROR(f'Geocoding request failed for "{address}": {e}')
-            )
-            return None, None
