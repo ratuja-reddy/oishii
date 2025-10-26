@@ -73,14 +73,14 @@
 
   <!-- Tab Navigation -->
   <div class="mb-6">
-    <div class="flex border-b border-gray-200">
-      <button id="about-tab" class="px-4 py-2 text-sm font-medium text-gray-900 border-b-2 border-indigo-500 bg-white">
+    <div class="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+      <button id="about-tab" class="flex-1 px-4 py-2 text-sm font-medium text-gray-900 bg-white rounded-md transition-all duration-200 shadow-sm">
         About
       </button>
-      <button id="updates-tab" class="px-4 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">
+      <button id="updates-tab" class="flex-1 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all duration-200">
         Updates
       </button>
-      <button id="spots-tab" class="px-4 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">
+      <button id="spots-tab" class="flex-1 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all duration-200">
         Lists
       </button>
     </div>
@@ -650,17 +650,17 @@ function switchToTab(activeTabId, activeContentId) {
   document.getElementById('spots-content').classList.add('hidden');
   
   // Reset all tabs
-  document.getElementById('about-tab').classList.add('border-transparent', 'text-gray-500');
-  document.getElementById('about-tab').classList.remove('border-indigo-500', 'text-gray-900');
-  document.getElementById('updates-tab').classList.add('border-transparent', 'text-gray-500');
-  document.getElementById('updates-tab').classList.remove('border-indigo-500', 'text-gray-900');
-  document.getElementById('spots-tab').classList.add('border-transparent', 'text-gray-500');
-  document.getElementById('spots-tab').classList.remove('border-indigo-500', 'text-gray-900');
+  document.getElementById('about-tab').classList.add('text-gray-600', 'hover:text-gray-900', 'hover:bg-white');
+  document.getElementById('about-tab').classList.remove('text-gray-900', 'bg-white', 'shadow-sm');
+  document.getElementById('updates-tab').classList.add('text-gray-600', 'hover:text-gray-900', 'hover:bg-white');
+  document.getElementById('updates-tab').classList.remove('text-gray-900', 'bg-white', 'shadow-sm');
+  document.getElementById('spots-tab').classList.add('text-gray-600', 'hover:text-gray-900', 'hover:bg-white');
+  document.getElementById('spots-tab').classList.remove('text-gray-900', 'bg-white', 'shadow-sm');
   
   // Show active content and tab
   document.getElementById(activeContentId).classList.remove('hidden');
-  document.getElementById(activeTabId).classList.add('border-indigo-500', 'text-gray-900');
-  document.getElementById(activeTabId).classList.remove('border-transparent', 'text-gray-500');
+  document.getElementById(activeTabId).classList.add('text-gray-900', 'bg-white', 'shadow-sm');
+  document.getElementById(activeTabId).classList.remove('text-gray-600', 'hover:text-gray-900', 'hover:bg-white');
 }
 
 document.getElementById('about-tab').addEventListener('click', function() {
