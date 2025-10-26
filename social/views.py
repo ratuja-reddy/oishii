@@ -308,13 +308,26 @@ def profile_public(request, username: str):
 @login_required
 def feed(request):
     """
-    Show review activities from me + people I follow.
+    Show review activities from me + people I'm friends with.
     Also annotate each activity with `liked_by_me` for the like button partial.
     """
-    following_ids = list(
-        Follow.objects.filter(follower=request.user).values_list("followee_id", flat=True)
+    # Get friends (both directions of accepted friendships)
+    friend_ids = list(
+        Friend.objects.filter(
+            Q(requesting_user=request.user, status='accepted') | 
+            Q(target_user=request.user, status='accepted')
+        ).values_list('requesting_user_id', 'target_user_id')
     )
-    audience = [request.user.id] + following_ids
+    
+    # Extract unique friend IDs (excluding self)
+    friend_user_ids = set()
+    for requesting_id, target_id in friend_ids:
+        if requesting_id != request.user.id:
+            friend_user_ids.add(requesting_id)
+        if target_id != request.user.id:
+            friend_user_ids.add(target_id)
+    
+    audience = [request.user.id] + list(friend_user_ids)
 
     activities = (
         Activity.objects
@@ -763,14 +776,25 @@ def find_friends_search(request):
         )
     users = users.order_by("username")[:25]
 
-    following_ids = set(
-        Follow.objects.filter(follower=request.user).values_list("followee_id", flat=True)
-    )
+    # Get all friendships for the current user
+    friendships = Friend.objects.filter(
+        Q(requesting_user=request.user) | Q(target_user=request.user)
+    ).select_related('requesting_user', 'target_user')
+    
+    # Create a mapping of user_id -> friendship for quick lookup
+    user_relationships = {}
+    for friendship in friendships:
+        other_user_id = friendship.target_user_id if friendship.requesting_user_id == request.user.id else friendship.requesting_user_id
+        user_relationships[other_user_id] = friendship
+    
+    # Add relationship data to each user
+    for user in users:
+        user.user_relationship = user_relationships.get(user.id)
 
     return render(
         request,
         "social/_people_results.html",
-        {"users": users, "following_ids": following_ids},
+        {"users": users},
     )
 
 @login_required

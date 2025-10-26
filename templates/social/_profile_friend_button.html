@@ -47,6 +47,7 @@ Inputs:
         hx-post="{% url 'send_friend_request' person.id %}"
         hx-target="#friend-button-container"
         hx-swap="outerHTML"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
         class="inline">
     {% csrf_token %}
     <button type="submit" 
