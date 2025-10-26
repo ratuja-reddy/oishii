@@ -8,6 +8,76 @@
 
   <!-- Tailwind build -->
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  
+  <!-- Custom color overrides -->
+  <style>
+    .btn-primary {
+      background-color: #ffbe65 !important;
+      border-color: #ffbe65 !important;
+    }
+    .btn-primary:hover {
+      background-color: #ffb347 !important;
+      border-color: #ffb347 !important;
+    }
+    .text-primary {
+      color: #ffbe65 !important;
+    }
+    .text-primary:hover {
+      color: #ffb347 !important;
+    }
+    .border-primary {
+      border-color: #ffbe65 !important;
+    }
+    .bg-primary {
+      background-color: #ffbe65 !important;
+    }
+    .ring-primary {
+      --tw-ring-color: #ffbe65 !important;
+    }
+    .bg-indigo-600 {
+      background-color: #ffbe65 !important;
+    }
+    .bg-indigo-700 {
+      background-color: #ffb347 !important;
+    }
+    .text-indigo-600 {
+      color: #ffbe65 !important;
+    }
+    .text-indigo-700 {
+      color: #ffb347 !important;
+    }
+    .hover\:text-indigo-700:hover {
+      color: #ffb347 !important;
+    }
+    .hover\:bg-indigo-700:hover {
+      background-color: #ffb347 !important;
+    }
+    .border-indigo-500 {
+      border-color: #ffbe65 !important;
+    }
+    .border-indigo-400 {
+      border-color: #ffbe65 !important;
+    }
+    .ring-indigo-500 {
+      --tw-ring-color: #ffbe65 !important;
+    }
+    .ring-indigo-400 {
+      --tw-ring-color: #ffbe65 !important;
+    }
+    .ring-indigo-300 {
+      --tw-ring-color: #ffbe65 !important;
+    }
+    .text-white {
+      color: #000000 !important;
+    }
+    button.text-white {
+      color: #000000 !important;
+    }
+    .bg-indigo-600 .text-white,
+    .bg-indigo-700 .text-white {
+      color: #000000 !important;
+    }
+  </style>
 
   <!-- HTMX -->
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
@@ -37,7 +107,7 @@
     });
   </script>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="min-h-screen" style="background-color: #f4ebd9;">
 
   <!-- Main content -->
   <main class="max-w-xl mx-auto px-4 pt-4 pb-[88px]">
