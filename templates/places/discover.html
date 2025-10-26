@@ -5,57 +5,460 @@
   <p class="text-gray-600 text-sm">Explore new restaurants and hidden gems</p>
 </div>
 
-<!-- Search Bar -->
+<!-- Google Maps Style Search Bar -->
 <div class="mb-6">
-  <form method="GET" action="{% url 'discover' %}" class="relative">
+  <div class="relative max-w-2xl mx-auto">
     <div class="relative">
       <input 
         type="text" 
-        name="search" 
-        value="{{ search_query|default:'' }}"
-        placeholder="Search restaurants by name, cuisine, city, or address..."
-        class="w-full px-4 py-3 pl-10 pr-4 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        id="restaurant-search"
+        placeholder="Search restaurants..."
+        class="w-full px-4 py-4 pl-12 pr-12 text-gray-700 bg-white border border-gray-300 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:shadow-xl transition-all duration-200"
+        autocomplete="off"
       />
-      <div class="absolute inset-y-0 left-0 flex items-center pl-3">
+      <div class="absolute inset-y-0 left-0 flex items-center pl-4">
         <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
       </div>
-      {% if search_query %}
-        <button 
-          type="button" 
-          onclick="clearSearch()"
-          class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
-        >
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      {% endif %}
+      <button 
+        type="button" 
+        id="clear-search"
+        class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 hidden"
+      >
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
     </div>
-  </form>
+    
+    <!-- Autocomplete Dropdown -->
+    <div id="autocomplete-dropdown" class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-50 hidden max-h-80 overflow-y-auto">
+      <!-- Results will be populated here -->
+    </div>
+  </div>
 </div>
 
-<script>
-  function clearSearch() {
-    const form = document.querySelector('form');
-    const input = form.querySelector('input[name="search"]');
-    input.value = '';
-    form.submit();
+<style>
+  .search-result-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f3f4f6;
+    cursor: pointer;
+    transition: background-color 0.2s;
   }
+  
+  .search-result-item:hover {
+    background-color: #f9fafb;
+  }
+  
+  .search-result-item:last-child {
+    border-bottom: none;
+  }
+  
+  .search-result-item.highlighted {
+    background-color: #eff6ff;
+  }
+  
+  .restaurant-name {
+    font-weight: 500;
+    color: #111827;
+    margin-bottom: 2px;
+  }
+  
+  .restaurant-details {
+    font-size: 14px;
+    color: #6b7280;
+  }
+  
+  .restaurant-cuisine {
+    color: #059669;
+    font-weight: 500;
+  }
+</style>
+
+<script>
+let searchTimeout;
+let selectedIndex = -1;
+let currentResults = [];
+
+document.getElementById('restaurant-search').addEventListener('input', function(e) {
+  const query = e.target.value.trim();
+  const clearBtn = document.getElementById('clear-search');
+  
+  // Show/hide clear button
+  if (query.length > 0) {
+    clearBtn.classList.remove('hidden');
+  } else {
+    clearBtn.classList.add('hidden');
+    hideDropdown();
+  }
+  
+  // Debounce search
+  clearTimeout(searchTimeout);
+  if (query.length < 2) {
+    hideDropdown();
+    return;
+  }
+  
+  searchTimeout = setTimeout(() => {
+    searchRestaurants(query);
+  }, 300);
+});
+
+document.getElementById('restaurant-search').addEventListener('keydown', function(e) {
+  const dropdown = document.getElementById('autocomplete-dropdown');
+  
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    selectedIndex = Math.min(selectedIndex + 1, currentResults.length - 1);
+    updateHighlight();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    selectedIndex = Math.max(selectedIndex - 1, -1);
+    updateHighlight();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (selectedIndex >= 0 && currentResults[selectedIndex]) {
+      selectRestaurant(currentResults[selectedIndex]);
+    }
+  } else if (e.key === 'Escape') {
+    hideDropdown();
+  }
+});
+
+document.getElementById('clear-search').addEventListener('click', function() {
+  document.getElementById('restaurant-search').value = '';
+  this.classList.add('hidden');
+  hideDropdown();
+  clearMapHighlights();
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  const searchContainer = document.querySelector('.relative.max-w-2xl');
+  if (!searchContainer.contains(e.target)) {
+    hideDropdown();
+  }
+});
+
+function searchRestaurants(query) {
+  fetch(`{% url 'places:restaurant_autocomplete' %}?q=${encodeURIComponent(query)}`)
+    .then(response => response.json())
+    .then(data => {
+      currentResults = data.restaurants;
+      displayResults(data.restaurants);
+    })
+    .catch(error => {
+      console.error('Search error:', error);
+    });
+}
+
+function displayResults(restaurants) {
+  const dropdown = document.getElementById('autocomplete-dropdown');
+  
+  if (restaurants.length === 0) {
+    dropdown.innerHTML = '<div class="search-result-item text-gray-500">No restaurants found</div>';
+  } else {
+    dropdown.innerHTML = restaurants.map((restaurant, index) => `
+      <div class="search-result-item" data-index="${index}" onclick="selectRestaurant(${JSON.stringify(restaurant).replace(/"/g, '&quot;')})">
+        <div class="restaurant-name">${restaurant.name}</div>
+        <div class="restaurant-details">
+          ${restaurant.cuisine ? `<span class="restaurant-cuisine">${restaurant.cuisine}</span>` : ''}
+          ${restaurant.address ? ` • ${restaurant.address}` : ''}
+          ${restaurant.city ? ` • ${restaurant.city}` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  dropdown.classList.remove('hidden');
+  selectedIndex = -1;
+}
+
+function updateHighlight() {
+  const items = document.querySelectorAll('.search-result-item[data-index]');
+  items.forEach((item, index) => {
+    if (index === selectedIndex) {
+      item.classList.add('highlighted');
+    } else {
+      item.classList.remove('highlighted');
+    }
+  });
+}
+
+function selectRestaurant(restaurant) {
+  // Update search input
+  document.getElementById('restaurant-search').value = restaurant.name;
+  document.getElementById('clear-search').classList.remove('hidden');
+  
+  // Hide dropdown
+  hideDropdown();
+  
+  // Highlight on map
+  highlightRestaurantOnMap(restaurant);
+}
+
+function hideDropdown() {
+  document.getElementById('autocomplete-dropdown').classList.add('hidden');
+  selectedIndex = -1;
+}
+
+function highlightRestaurantOnMap(restaurant) {
+  if (typeof map !== 'undefined' && window.restaurantMarkers) {
+    // Clear previous highlights
+    clearMapHighlights();
+    
+    // Find and highlight the selected restaurant marker
+    const marker = window.restaurantMarkers[restaurant.id];
+    if (marker) {
+      // Change marker icon to highlighted version
+      marker.setIcon({
+        url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#3b82f6"/>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(32, 32),
+        anchor: new google.maps.Point(16, 32)
+      });
+      
+      // Center map on the restaurant
+      map.setCenter({ lat: restaurant.lat, lng: restaurant.lng });
+      map.setZoom(16);
+      
+      // Open info window
+      if (window.infoWindow) {
+        const infoContent = `
+          <div style="padding: 8px; min-width: 200px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${restaurant.name}</h3>
+            ${restaurant.cuisine ? `<p style="margin: 0 0 8px 0; color: #666; font-size: 14px;">${restaurant.cuisine}</p>` : ''}
+            ${restaurant.address ? `<p style="margin: 0 0 8px 0; color: #666; font-size: 12px;">${restaurant.address}</p>` : ''}
+            <a href="${restaurant.url}" 
+               style="color: #3b82f6; text-decoration: none; font-size: 14px;">
+              View Details →
+            </a>
+          </div>
+        `;
+        window.infoWindow.setContent(infoContent);
+        window.infoWindow.open(map, marker);
+      }
+    }
+  }
+}
+
+function clearMapHighlights() {
+  if (typeof map !== 'undefined' && window.restaurantMarkers) {
+    // Reset all markers to original icon
+    Object.values(window.restaurantMarkers).forEach(marker => {
+      marker.setIcon({
+        url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#ef4444"/>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(24, 24),
+        anchor: new google.maps.Point(12, 24)
+      });
+    });
+    
+    // Close info window
+    if (window.infoWindow) {
+      window.infoWindow.close();
+    }
+  }
+}
 </script>
 
 {% include "scripts/google_maps.html" with api_key=API_KEY %}
 
-{% if restaurants %}
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    {% for r in restaurants %}
-      {% include "places/_restaurant_card.html" with r=r pinned=False %}
-    {% endfor %}
-  </div>
-{% else %}
-  <div class="text-center py-12">
-    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-      <i data-lucide="compass" class="w-8 h-8 text-gray-400"></i>
+<!-- Collapsible Restaurant List Section -->
+<div class="mt-8">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <!-- Header with toggle button -->
+    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-900">All Restaurants</h2>
+        <p class="text-sm text-gray-600">{{ restaurants|length }} restaurants available</p>
+      </div>
+      <button 
+        id="toggle-restaurant-list"
+        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+      >
+        <span id="toggle-text">Show List</span>
+        <i data-lucide="chevron-down" id="toggle-icon" class="w-4 h-4 transition-transform"></i>
+      </button>
     </div>
-    <h3 class="text-lg font-semibold text-gray-900 mb-2">No restaurants yet</h3>
-    <p class="text-gray-600 mb-4">Check back later for new discoveries!</p>
+    
+    <!-- Collapsible Content -->
+    <div id="restaurant-list-content" class="hidden">
+      <!-- Search Bar for Restaurant List -->
+      <div class="p-4 border-b border-gray-200 bg-gray-50">
+        <div class="relative max-w-md">
+          <input 
+            type="text" 
+            id="restaurant-list-search"
+            placeholder="Search restaurants in list..."
+            class="w-full px-4 py-2 pl-10 pr-4 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <div class="absolute inset-y-0 left-0 flex items-center pl-3">
+            <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
+          </div>
+        </div>
+        
+        <!-- Sort Options -->
+        <div class="mt-3 flex items-center gap-4">
+          <span class="text-sm text-gray-600">Sort by:</span>
+          <div class="flex gap-2">
+            <button 
+              id="sort-name" 
+              class="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-full hover:bg-blue-200 transition-colors"
+            >
+              Name A-Z
+            </button>
+            <button 
+              id="sort-cuisine" 
+              class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+            >
+              Cuisine
+            </button>
+            <button 
+              id="sort-newest" 
+              class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+            >
+              Newest
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Restaurant Grid -->
+      <div id="restaurant-grid" class="p-4">
+        {% if restaurants %}
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for r in restaurants %}
+              <div class="restaurant-item" data-name="{{ r.name|lower }}" data-cuisine="{{ r.cuisine|lower }}" data-id="{{ r.id }}">
+                {% include "places/_restaurant_card.html" with r=r pinned=False %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-12">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i data-lucide="compass" class="w-8 h-8 text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">No restaurants yet</h3>
+            <p class="text-gray-600 mb-4">Check back later for new discoveries!</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
   </div>
-{% endif %}
+</div>
+
+<style>
+  .restaurant-item {
+    transition: opacity 0.2s ease-in-out;
+  }
+  
+  .restaurant-item.hidden {
+    display: none;
+  }
+  
+  .sort-active {
+    background-color: #3b82f6 !important;
+    color: white !important;
+  }
+</style>
+
+<script>
+let isListExpanded = false;
+let currentSort = 'name';
+let currentSearchQuery = '';
+
+// Toggle restaurant list
+document.getElementById('toggle-restaurant-list').addEventListener('click', function() {
+  const content = document.getElementById('restaurant-list-content');
+  const toggleText = document.getElementById('toggle-text');
+  const toggleIcon = document.getElementById('toggle-icon');
+  
+  isListExpanded = !isListExpanded;
+  
+  if (isListExpanded) {
+    content.classList.remove('hidden');
+    toggleText.textContent = 'Hide List';
+    toggleIcon.style.transform = 'rotate(180deg)';
+  } else {
+    content.classList.add('hidden');
+    toggleText.textContent = 'Show List';
+    toggleIcon.style.transform = 'rotate(0deg)';
+  }
+});
+
+// Restaurant list search
+document.getElementById('restaurant-list-search').addEventListener('input', function(e) {
+  currentSearchQuery = e.target.value.toLowerCase();
+  filterAndSortRestaurants();
+});
+
+// Sort buttons
+document.getElementById('sort-name').addEventListener('click', () => setSort('name'));
+document.getElementById('sort-cuisine').addEventListener('click', () => setSort('cuisine'));
+document.getElementById('sort-newest').addEventListener('click', () => setSort('newest'));
+
+function setSort(sortType) {
+  currentSort = sortType;
+  
+  // Update button styles
+  document.querySelectorAll('[id^="sort-"]').forEach(btn => {
+    btn.classList.remove('sort-active');
+    btn.classList.add('text-gray-600', 'bg-gray-100');
+    btn.classList.remove('text-blue-600', 'bg-blue-100');
+  });
+  
+  const activeBtn = document.getElementById(`sort-${sortType}`);
+  activeBtn.classList.add('sort-active');
+  activeBtn.classList.remove('text-gray-600', 'bg-gray-100');
+  
+  filterAndSortRestaurants();
+}
+
+function filterAndSortRestaurants() {
+  const items = document.querySelectorAll('.restaurant-item');
+  const visibleItems = [];
+  
+  // Filter items based on search query
+  items.forEach(item => {
+    const name = item.dataset.name;
+    const cuisine = item.dataset.cuisine;
+    
+    if (currentSearchQuery === '' || 
+        name.includes(currentSearchQuery) || 
+        cuisine.includes(currentSearchQuery)) {
+      item.classList.remove('hidden');
+      visibleItems.push(item);
+    } else {
+      item.classList.add('hidden');
+    }
+  });
+  
+  // Sort visible items
+  visibleItems.sort((a, b) => {
+    switch (currentSort) {
+      case 'name':
+        return a.dataset.name.localeCompare(b.dataset.name);
+      case 'cuisine':
+        return a.dataset.cuisine.localeCompare(b.dataset.cuisine);
+      case 'newest':
+        return parseInt(b.dataset.id) - parseInt(a.dataset.id);
+      default:
+        return 0;
+    }
+  });
+  
+  // Reorder items in DOM
+  const grid = document.getElementById('restaurant-grid').querySelector('.grid');
+  visibleItems.forEach(item => {
+    grid.appendChild(item);
+  });
+}
+
+// Initialize with name sort
+setSort('name');
+</script>
 {% endblock %}
