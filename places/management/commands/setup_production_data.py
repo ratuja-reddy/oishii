@@ -27,18 +27,11 @@ class Command(BaseCommand):
             )
             return
 
-        # Check if we already have restaurants
-        existing_count = Restaurant.objects.count()
-        if existing_count > 0:
-            self.stdout.write(
-                self.style.SUCCESS(f'Restaurants already exist ({existing_count}). Skipping import.')
-            )
-            return
-
         self.stdout.write('Setting up production restaurant data...')
         
         imported_count = 0
         geocoded_count = 0
+        skipped_count = 0
 
         with transaction.atomic():
             with open(csv_file, 'r', encoding='utf-8') as file:
@@ -53,6 +46,12 @@ class Command(BaseCommand):
                     category = row.get('category', 'restaurant').strip()
                     
                     if not name or not address:
+                        continue
+                    
+                    # Check if restaurant already exists (by name)
+                    if Restaurant.objects.filter(name=name).exists():
+                        skipped_count += 1
+                        self.stdout.write(f'Skipped existing: {name}')
                         continue
                     
                     # Extract city from address
@@ -88,7 +87,7 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f'Production setup completed: {imported_count} restaurants imported, '
-                f'{geocoded_count} geocoded'
+                f'{skipped_count} skipped, {geocoded_count} geocoded'
             )
         )
 
