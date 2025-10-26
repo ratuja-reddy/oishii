@@ -44,11 +44,91 @@ body {
 let map, infoWindow;
 
 function initMap() {
+  // Calculate center based on restaurant locations if available
+  let center = { lat: -34.397, lng: 150.644 };
+  let zoom = 6;
+  
+  {% if restaurants_with_coords %}
+    // Calculate bounds to fit all restaurants
+    const bounds = new google.maps.LatLngBounds();
+    let hasValidCoords = false;
+    
+    {% for restaurant in restaurants_with_coords %}
+      {% if restaurant.lat and restaurant.lng %}
+        bounds.extend(new google.maps.LatLng({{ restaurant.lat }}, {{ restaurant.lng }}));
+        hasValidCoords = true;
+      {% endif %}
+    {% endfor %}
+    
+    if (hasValidCoords) {
+      center = bounds.getCenter();
+      zoom = 12; // Closer zoom for restaurant view
+    }
+  {% endif %}
+
   map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: -34.397, lng: 150.644 },
-    zoom: 6,
+    center: center,
+    zoom: zoom,
   });
+  
+  {% if restaurants_with_coords %}
+    // Fit bounds if we have restaurant coordinates
+    if (hasValidCoords) {
+      map.fitBounds(bounds);
+    }
+  {% endif %}
+  
   infoWindow = new google.maps.InfoWindow();
+  
+  // Store markers globally for search interaction
+  window.restaurantMarkers = {};
+  window.infoWindow = infoWindow;
+
+  // Add restaurant markers
+  {% if restaurants_with_coords %}
+    {% for restaurant in restaurants_with_coords %}
+      {% if restaurant.lat and restaurant.lng %}
+        const marker{{ restaurant.id }} = new google.maps.Marker({
+          position: { lat: {{ restaurant.lat }}, lng: {{ restaurant.lng }} },
+          map: map,
+          title: "{{ restaurant.name|escapejs }}",
+          icon: {
+            url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#ef4444"/>
+              </svg>
+            `),
+            scaledSize: new google.maps.Size(24, 24),
+            anchor: new google.maps.Point(12, 24)
+          }
+        });
+
+        const infoContent{{ restaurant.id }} = `
+          <div style="padding: 8px; min-width: 200px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">{{ restaurant.name|escapejs }}</h3>
+            {% if restaurant.cuisine %}
+              <p style="margin: 0 0 8px 0; color: #666; font-size: 14px;">{{ restaurant.cuisine|escapejs }}</p>
+            {% endif %}
+            {% if restaurant.address %}
+              <p style="margin: 0 0 8px 0; color: #666; font-size: 12px;">{{ restaurant.address|escapejs }}</p>
+            {% endif %}
+            <a href="{% url 'places:restaurant_detail' restaurant.id %}" 
+               style="color: #3b82f6; text-decoration: none; font-size: 14px;">
+              View Details →
+            </a>
+          </div>
+        `;
+
+        marker{{ restaurant.id }}.addListener("click", () => {
+          infoWindow.setContent(infoContent{{ restaurant.id }});
+          infoWindow.open(map, marker{{ restaurant.id }});
+        });
+        
+        // Store marker globally for search interaction
+        window.restaurantMarkers[{{ restaurant.id }}] = marker{{ restaurant.id }};
+      {% endif %}
+    {% endfor %}
+  {% endif %}
 
   const locationButton = document.createElement("button");
 
