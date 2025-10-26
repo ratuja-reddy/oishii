@@ -4,176 +4,378 @@
 {% block content %}
 <div class="max-w-3xl mx-auto">
 
-  <!-- Header -->
-  <div class="flex items-start gap-4 mb-6">
-    {% if person.profile and person.profile.avatar %}
-      <img src="{{ person.profile.avatar.url }}"
-           alt="{{ person.username }} avatar"
-           class="h-20 w-20 rounded-full object-cover ring-1 ring-gray-200 shadow-sm">
-    {% else %}
-      <div class="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center text-xl text-gray-600">
-        {{ person.username|first|upper }}
+  <!-- Profile header with stats -->
+  <header class="mb-6">
+    <div class="flex items-start justify-between gap-4">
+      <!-- Left: avatar + meta -->
+      <div class="flex items-start gap-4">
+        {% if person.profile and person.profile.avatar %}
+          <img src="{{ person.profile.avatar.url }}" alt="{{ person.username }} avatar"
+               class="w-20 h-20 rounded-full object-cover ring-2 ring-white shadow">
+        {% else %}
+          <div class="w-20 h-20 rounded-full bg-gray-200 ring-2 ring-white shadow"></div>
+        {% endif %}
+
+        <div>
+          <h1 class="text-2xl font-bold leading-tight">
+            {{ person.profile.display_name|default:person.username }}
+            <span class="block text-sm text-gray-500">@{{ person.username }}</span>
+          </h1>
+
+          <p class="mt-1 text-gray-600">
+            {% if person.profile and person.profile.location %}
+              {{ person.profile.location }}
+            {% endif %}
+            {% if person.profile and person.profile.website %}
+              {% if person.profile.location %} • {% endif %}
+              <a href="{{ person.profile.website }}" target="_blank" rel="noopener"
+                 class="text-indigo-600 hover:text-indigo-700 underline">Website</a>
+            {% endif %}
+          </p>
+
+          <!-- Stats row -->
+          <div class="mt-3 flex gap-6 text-sm">
+            <div class="text-center">
+              <div class="font-semibold text-gray-900">{{ person.profile.avg_rating|default:"—" }}</div>
+              <div class="text-gray-500">Avg Spot Rating</div>
+            </div>
+            <div class="text-center">
+              <div class="font-semibold text-gray-900">{{ person.profile.spots_reviewed_count }}</div>
+              <div class="text-gray-500">Spots Reviewed</div>
+            </div>
+            <div class="text-center">
+              <div class="font-semibold text-gray-900">{{ person.profile.spots_saved_count }}</div>
+              <div class="text-gray-500">Spots Saved</div>
+            </div>
+          </div>
+
+          <div class="mt-3 flex flex-wrap gap-2">
+            {% if request.user.id != person.id %}
+              {% if is_friend %}
+                <form method="post" action="{% url 'delete_friend' person.id %}" class="inline">
+                  {% csrf_token %}
+                  <button type="submit" 
+                          onclick="return confirm('Are you sure you want to remove {{ person.username }} from your friends?')"
+                          class="px-3 py-1.5 rounded-md border border-red-300 text-sm bg-white text-red-600 hover:bg-red-50">
+                    Remove Friend
+                  </button>
+                </form>
+              {% elif is_pending_request %}
+                <span class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-gray-100 text-gray-500">
+                  Request Pending
+                </span>
+              {% else %}
+                <form method="post" action="{% url 'send_friend_request' person.id %}" class="inline">
+                  {% csrf_token %}
+                  <button type="submit" 
+                          class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white hover:bg-gray-50">
+                    Add Friend
+                  </button>
+                </form>
+              {% endif %}
+            {% endif %}
+            <a href="{% url 'friends' %}"
+               class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white text-gray-700 hover:bg-gray-50">
+              Friends
+            </a>
+          </div>
+        </div>
       </div>
+    </div>
+  </header>
+
+  <!-- Tab Navigation -->
+  <div class="mb-6">
+    <div class="flex border-b border-gray-200">
+      <button id="about-tab" class="px-4 py-2 text-sm font-medium text-gray-900 border-b-2 border-indigo-500 bg-white">
+        About
+      </button>
+      <button id="updates-tab" class="px-4 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">
+        Updates
+      </button>
+    </div>
+  </div>
+
+  <!-- About Tab Content -->
+  <div id="about-content">
+
+    <!-- Bio -->
+    {% if person.profile and person.profile.bio %}
+      <section class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <h2 class="font-semibold mb-2">About</h2>
+        <p class="text-gray-700">{{ person.profile.bio }}</p>
+      </section>
     {% endif %}
 
-    <div class="flex-1 min-w-0">
-      <div class="text-2xl font-semibold truncate">
-        {% if person.profile and person.profile.display_name %}
-          {{ person.profile.display_name }}
-        {% elif person.first_name or person.last_name %}
-          {{ person.first_name }}{% if person.last_name %} {{ person.last_name }}{% endif %}
-        {% else %}
-          @{{ person.username }}
-        {% endif %}
-      </div>
-      <div class="text-sm text-gray-500 truncate">
-        @{{ person.username }}
-        {% if person.profile and person.profile.location %}
-          • {{ person.profile.location }}
-        {% endif %}
-      </div>
+    <!-- Favorite cuisines -->
+    {% if person.profile and person.profile.favorite_cuisines %}
+      <section class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <h2 class="font-semibold mb-2">Favorite Cuisines</h2>
+        <div class="flex flex-wrap gap-2">
+          {% for cuisine in person.profile.favorite_cuisines %}
+            <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">{{ cuisine }}</span>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
 
-      {% if person.profile and person.profile.bio %}
-        <p class="mt-2 text-gray-800">{{ person.profile.bio }}</p>
-      {% endif %}
-    </div>
-
-    {% if request.user.id != person.id %}
-      <form id="follow-{{ person.id }}"
-            hx-post="{% url 'toggle_follow' person.id %}"
-            hx-target="#follow-{{ person.id }}"
-            hx-swap="outerHTML">
-        {% csrf_token %}
-        {% if is_following %}
-          <button type="submit"
-                  class="px-3 py-1 rounded-full text-sm border text-red-700 border-red-300 hover:bg-red-50">
-            Unfollow
-          </button>
-        {% else %}
-          <button type="submit"
-                  class="px-3 py-1 rounded-full text-sm border text-gray-700 border-gray-300">
-            + Follow
-          </button>
-        {% endif %}
-      </form>
+    <!-- Favorite spots -->
+    {% if person.profile and person.profile.favorite_spots.all %}
+      <section class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <h2 class="font-semibold mb-2">Favorite Spots</h2>
+        <div class="flex flex-wrap gap-2">
+          {% for spot in person.profile.favorite_spots.all %}
+            <a href="{% url 'places:restaurant_detail' spot.id %}" 
+               class="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full hover:bg-indigo-200">
+              {{ spot.name }}
+            </a>
+          {% endfor %}
+        </div>
+      </section>
     {% endif %}
   </div>
 
-  <!-- Optional: Friends / Following buttons (Goodreads-style) -->
-  <div class="flex items-center gap-2 mb-4">
-    <a href="{% url 'friends' %}"
-       class="px-3 py-1.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50">
-      Friends
-    </a>
-    <a href="{% url 'profile_public' person.username %}"
-       class="px-3 py-1.5 rounded-xl border border-indigo-600 text-white bg-indigo-600">
-      Following
-    </a>
-  </div>
-
-  <!-- Stats -->
-  <div class="grid grid-cols-3 gap-3 mb-6">
-    <div class="bg-white rounded-2xl shadow p-4 text-center">
-      <div class="text-2xl font-semibold">{{ restaurants_count }}</div>
-      <div class="text-xs text-gray-500">restaurants</div>
-    </div>
-    <div class="bg-white rounded-2xl shadow p-4 text-center">
-      <div class="text-2xl font-semibold">{{ following_count }}</div>
-      <div class="text-xs text-gray-500">following</div>
-    </div>
-    <div class="bg-white rounded-2xl shadow p-4 text-center">
-      <div class="text-2xl font-semibold">{{ followers_count }}</div>
-      <div class="text-xs text-gray-500">followers</div>
-    </div>
-  </div>
-
-  <!-- Lists (all if following; only public otherwise) -->
-  <section class="mb-8">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-lg font-semibold">Lists</h2>
-      {% if not is_following %}
-        <span class="text-xs text-gray-500">You’re seeing public lists</span>
-      {% endif %}
-    </div>
-
-    {% if lists %}
-      <div class="space-y-3">
-        {% for L in lists %}
-          <article class="bg-white rounded-2xl shadow p-4">
-            <div class="flex items-start justify-between">
-              <div class="min-w-0">
-                <div class="font-medium truncate">{{ L.title }}</div>
-                <div class="text-xs text-gray-500 mt-0.5">
-                  {{ L.places_count|default:0 }} places
-                  {% if not L.is_public %} · Private{% endif %}
+  <!-- Updates Tab Content -->
+  <div id="updates-content" class="hidden">
+    <div class="space-y-5">
+      {% if activities %}
+        {% for a in activities %}
+          <!-- Activity card -->
+          <article id="activity-{{ a.id }}" class="bg-white rounded-2xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition">
+            <!-- Header: avatar + name + time -->
+            <header class="flex items-center gap-3 mb-3">
+              {% if a.user.profile and a.user.profile.avatar %}
+                <a href="{% url 'profile_public' a.user.username %}">
+                  <img src="{{ a.user.profile.avatar.url }}"
+                       alt="{{ a.user.username }} avatar"
+                       class="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-400/70">
+                </a>
+              {% else %}
+                <a href="{% url 'profile_public' a.user.username %}">
+                  <div class="w-10 h-10 rounded-full bg-gray-200 ring-2 ring-indigo-200"></div>
+                </a>
+              {% endif %}
+              <div class="flex-1 leading-tight min-w-0">
+                <div class="font-semibold text-gray-900 truncate">
+                  <a class="hover:underline" href="{% url 'profile_public' a.user.username %}">
+                    {% if a.user.profile and a.user.profile.display_name %}
+                      {{ a.user.profile.display_name }}
+                    {% elif a.user.first_name or a.user.last_name %}
+                      {{ a.user.first_name }}{% if a.user.last_name %} {{ a.user.last_name }}{% endif %}
+                    {% else %}
+                      @{{ a.user.username }}
+                    {% endif %}
+                  </a>
+                </div>
+                <div class="text-xs text-gray-500 truncate">
+                  <a class="hover:underline" href="{% url 'profile_public' a.user.username %}">
+                    @{{ a.user.username }}
+                  </a>
+                  {% if a.user.profile and a.user.profile.location %} • {{ a.user.profile.location }}{% endif %}
+                  • {{ a.created_at|date:"M j, H:i" }}
                 </div>
               </div>
-              {% if L.updated_at %}
-                <div class="text-xs text-gray-500 whitespace-nowrap">
-                  Updated {{ L.updated_at|date:"M j" }}
-                </div>
-              {% endif %}
+            </header>
+
+            <!-- Title row: restaurant + overall stars -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <h2 class="text-lg font-bold text-gray-900">
+                  <a class="hover:underline" href="{% url 'places:restaurant_detail' a.restaurant.id %}">
+                    {{ a.restaurant.name }}
+                  </a>
+                </h2>
+                {% if a.review.overall_rating %}
+                  {% include "components/stars.html" with rating=a.review.overall_rating size="md" %}
+                {% endif %}
+              </div>
             </div>
 
-            {% with preview_pins=L.pins.all|slice:":5" %}
-              {% if preview_pins %}
-                <div class="mt-3 flex flex-wrap gap-2 text-sm">
-                  {% for p in preview_pins %}
-                    {% if p.restaurant %}
-                      <a href="{% url 'places:restaurant_detail' p.restaurant.id %}"
-                         class="px-2 py-1 rounded-full bg-gray-100 text-gray-700 hover:underline">
-                        {{ p.restaurant.name }}
-                      </a>
-                    {% endif %}
+            <!-- Review text -->
+            {% if a.review.text %}
+              <p class="mt-2 text-gray-800 leading-snug">{{ a.review.text }}</p>
+            {% endif %}
+
+            <!-- Photos -->
+            {% if a.review.photos.all %}
+              <div class="mt-3">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {% for photo in a.review.photos.all %}
+                    <div class="relative group">
+                      <img src="{{ photo.image.url }}" 
+                           alt="Review photo" 
+                           class="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                           onclick="openImageModal('{{ photo.image.url }}')">
+                    </div>
                   {% endfor %}
                 </div>
-              {% else %}
-                <div class="mt-2 text-sm text-gray-500">No places yet.</div>
-              {% endif %}
-            {% endwith %}
-          </article>
-        {% endfor %}
-      </div>
-    {% else %}
-      <p class="text-sm text-gray-500">
-        {% if is_following %}
-          No lists yet.
-        {% else %}
-          Follow this user to see all their lists.
-        {% endif %}
-      </p>
-    {% endif %}
-  </section>
-
-  <!-- Recent reviews -->
-  <section class="mb-8">
-    <h2 class="text-lg font-semibold mb-3">Recent reviews</h2>
-    {% if recent_reviews %}
-      <div class="space-y-4">
-        {% for r in recent_reviews %}
-          <article class="bg-white rounded-2xl shadow p-4">
-            <div class="text-xs text-gray-500">{{ r.created_at|date:"M j, H:i" }}</div>
-            <div class="mt-1 font-semibold">
-              <a class="hover:underline" href="{% url 'places:restaurant_detail' r.restaurant.id %}">
-                {{ r.restaurant.name }}
-              </a>
-            </div>
-            {% if r.text %}
-              <p class="mt-1 text-gray-800">{{ r.text }}</p>
+              </div>
             {% endif %}
-            <div class="mt-2">
-              <a href="{% url 'places:restaurant_detail' r.restaurant.id %}"
-                 class="text-indigo-600 hover:underline">
-                See restaurant
-              </a>
+
+            <!-- Sub-ratings -->
+            {% if a.review.food or a.review.service or a.review.value or a.review.atmosphere or a.review.would_go_again is not None %}
+              <div class="mt-3 flex flex-wrap gap-2 text-xs">
+                {% if a.review.food %}
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                    <span>Food</span>
+                    {% include "components/stars.html" with rating=a.review.food size="sm" %}
+                  </span>
+                {% endif %}
+                {% if a.review.service %}
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                    <span>Service</span>
+                    {% include "components/stars.html" with rating=a.review.service size="sm" %}
+                  </span>
+                {% endif %}
+                {% if a.review.value %}
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                    <span>Value</span>
+                    {% include "components/stars.html" with rating=a.review.value size="sm" %}
+                  </span>
+                {% endif %}
+                {% if a.review.atmosphere %}
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                    <span>Atmosphere</span>
+                    {% include "components/stars.html" with rating=a.review.atmosphere size="sm" %}
+                  </span>
+                {% endif %}
+                {% if a.review.would_go_again is not None %}
+                  {% if a.review.would_go_again %}
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700">
+                      <span>👍</span>
+                      <span>Would go again</span>
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-700">
+                      <span>👎</span>
+                      <span>Wouldn't go again</span>
+                    </span>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <footer class="mt-4 flex items-center gap-4">
+              <div id="like-{{ a.id }}">
+                {% include "social/_like_button.html" with a=a %}
+              </div>
+
+              <div class="text-sm text-gray-600">💬 {{ a.comment_count|default:0 }}</div>
+
+              <button class="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
+                      hx-get="{% url 'list_picker' a.restaurant.id %}"
+                      hx-target="#modal"
+                      hx-swap="innerHTML">
+                💾 Save
+              </button>
+            </footer>
+
+            <!-- Comments -->
+            <div class="mt-4 space-y-3">
+              {% if a.comments.all %}
+                {% for c in a.comments.all %}
+                  <div class="flex items-start gap-2">
+                    {% if c.user.profile and c.user.profile.avatar %}
+                      <img src="{{ c.user.profile.avatar.url }}"
+                           class="h-8 w-8 rounded-full object-cover flex-shrink-0" alt="">
+                    {% else %}
+                      <div class="h-8 w-8 rounded-full bg-gray-200 flex-shrink-0"></div>
+                    {% endif %}
+                    <div class="bg-gray-50 rounded-2xl px-3 py-2 text-sm max-w-full flex-1">
+                      <div class="flex items-center justify-between">
+                        <span class="font-medium">{{ c.user.username }}</span>
+                        <div class="flex items-center gap-2">
+                          <span class="text-[11px] text-gray-400">{{ c.created_at|date:"M j, H:i" }}</span>
+                          {% include "social/_comment_like_button.html" with comment=c %}
+                        </div>
+                      </div>
+                      <div class="text-gray-800 break-words mt-1">{{ c.text }}</div>
+                    </div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <p class="text-sm text-gray-400">No comments yet.</p>
+              {% endif %}
             </div>
+
+            <!-- Comment form -->
+            <form method="post"
+                  action="{% url 'add_comment' a.id %}"
+                  class="mt-2 flex gap-2">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}#activity-{{ a.id }}">
+              <input type="text" name="text" placeholder="Add a comment..."
+                     class="flex-1 border rounded-full px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              <button type="submit"
+                      class="px-3 py-2 bg-indigo-600 text-white text-sm rounded-full hover:bg-indigo-700">
+                Post
+              </button>
+            </form>
           </article>
         {% endfor %}
-      </div>
-    {% else %}
-      <p class="text-sm text-gray-500">No reviews yet.</p>
-    {% endif %}
-  </section>
+      {% else %}
+        <div class="bg-white rounded-xl border border-gray-200 p-8 text-center">
+          <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No reviews yet</h3>
+          <p class="text-gray-600">This user hasn't written any reviews yet.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
 
 </div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+  <div class="relative">
+    <button class="absolute top-4 right-4 text-white text-3xl" onclick="closeImageModal()">
+      &times;
+    </button>
+    <img id="modalImage" src="" alt="Full size image" class="max-w-[90vw] max-h-[90vh] object-contain">
+  </div>
+</div>
+
+<script>
+// Tab switching
+document.getElementById('about-tab').addEventListener('click', function() {
+  document.getElementById('about-content').classList.remove('hidden');
+  document.getElementById('updates-content').classList.add('hidden');
+  this.classList.add('text-gray-900', 'border-indigo-500');
+  this.classList.remove('text-gray-500', 'border-transparent');
+  document.getElementById('updates-tab').classList.remove('text-gray-900', 'border-indigo-500');
+  document.getElementById('updates-tab').classList.add('text-gray-500', 'border-transparent');
+});
+
+document.getElementById('updates-tab').addEventListener('click', function() {
+  document.getElementById('updates-content').classList.remove('hidden');
+  document.getElementById('about-content').classList.add('hidden');
+  this.classList.add('text-gray-900', 'border-indigo-500');
+  this.classList.remove('text-gray-500', 'border-transparent');
+  document.getElementById('about-tab').classList.remove('text-gray-900', 'border-indigo-500');
+  document.getElementById('about-tab').classList.add('text-gray-500', 'border-transparent');
+});
+
+// Image modal functions
+function openImageModal(src) {
+  document.getElementById('modalImage').src = src;
+  document.getElementById('imageModal').classList.remove('hidden');
+}
+
+function closeImageModal() {
+  document.getElementById('imageModal').classList.add('hidden');
+  document.getElementById('modalImage').src = '';
+}
+
+// Close modal when clicking outside
+document.getElementById('imageModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeImageModal();
+  }
+});
+</script>
 {% endblock %}

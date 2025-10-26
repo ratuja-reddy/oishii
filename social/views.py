@@ -229,42 +229,27 @@ def profile_public(request, username: str):
     if person.id == request.user.id:
         return redirect("profile_me")
 
-    # Are *you* following this person?
-    is_following = Follow.objects.filter(follower=request.user, followee=person).exists()
+    # Check friend relationship
+    friendship = Friend.objects.filter(
+        Q(requesting_user=request.user, target_user=person) |
+        Q(requesting_user=person, target_user=request.user)
+    ).first()
+    
+    is_friend = friendship and friendship.status == 'accepted'
+    is_pending_request = friendship and friendship.status == 'pending'
 
-    # Counts
-    restaurants_count = (
-        Review.objects.filter(user=person).values("restaurant").distinct().count()
-    )
-    following_count = Follow.objects.filter(follower=person).count()
-    followers_count = Follow.objects.filter(followee=person).count()
-
-    # Recent reviews
-    recent_reviews = (
-        Review.objects
-        .select_related("restaurant", "user")
+    # Get activities (reviews) for the Updates tab
+    activities = (
+        Activity.objects
         .filter(user=person)
-        .order_by("-created_at")[:10]
-    )
-
-    # ---- Lists (only show all lists if you follow; otherwise only public lists) ----
-    base_qs = List.objects.filter(owner=person)
-    if not is_following:
-        base_qs = base_qs.filter(is_public=True)
-
-    lists = (
-        base_qs
-        .annotate(places_count=Count("pins", distinct=True))   # number of items in the list
+        .select_related('user', 'user__profile', 'restaurant', 'review')
         .prefetch_related(
-            # fetch up to N pins with restaurants for a tiny preview row
-            Prefetch(
-                "pins",
-                queryset=Pin.objects
-                    .select_related("restaurant")
-                    .order_by("-created_at"),
-            )
+            'review__photos',
+            'comments__user__profile',
+            'likes__user__profile'
         )
-        .order_by("position", "id")[:6]
+        .annotate(comment_count=Count('comments'))
+        .order_by('-created_at')[:20]
     )
 
     return render(
@@ -272,12 +257,9 @@ def profile_public(request, username: str):
         "social/profile_public.html",
         {
             "person": person,
-            "is_following": is_following,
-            "restaurants_count": restaurants_count,
-            "following_count": following_count,
-            "followers_count": followers_count,
-            "recent_reviews": recent_reviews,
-            "lists": lists,  # <- NEW
+            "is_friend": is_friend,
+            "is_pending_request": is_pending_request,
+            "activities": activities,
         },
     )
 # ---------- Feed ----------
