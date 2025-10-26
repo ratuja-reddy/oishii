@@ -39,36 +39,96 @@
             <div class="flex items-start gap-3">
               <!-- Avatar -->
               <div class="flex-shrink-0">
-                <a href="{% url 'profile_public' notification.comment.user.username %}" 
-                   class="block" 
-                   onclick="event.stopPropagation()">
-                  {% if notification.comment.user.profile and notification.comment.user.profile.avatar %}
-                    <img src="{{ notification.comment.user.profile.avatar.url }}" alt="{{ notification.comment.user.username }} avatar"
-                         class="h-10 w-10 rounded-full object-cover ring-1 ring-white shadow-sm hover:ring-2 hover:ring-indigo-300 transition-all">
-                  {% else %}
-                    <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500 hover:bg-gray-300 transition-colors">
-                      {{ notification.comment.user.username|first|upper }}
-                    </div>
-                  {% endif %}
-                </a>
+                {% if notification.notification_type == 'comment' %}
+                  <a href="{% url 'profile_public' notification.comment.user.username %}" 
+                     class="block" 
+                     onclick="event.stopPropagation()">
+                    {% if notification.comment.user.profile and notification.comment.user.profile.avatar %}
+                      <img src="{{ notification.comment.user.profile.avatar.url }}" alt="{{ notification.comment.user.username }} avatar"
+                           class="h-10 w-10 rounded-full object-cover ring-1 ring-white shadow-sm hover:ring-2 hover:ring-indigo-300 transition-all">
+                    {% else %}
+                      <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500 hover:bg-gray-300 transition-colors">
+                        {{ notification.comment.user.username|first|upper }}
+                      </div>
+                    {% endif %}
+                  </a>
+                {% elif notification.notification_type == 'review_like' %}
+                  <a href="{% url 'profile_public' notification.like.user.username %}" 
+                     class="block" 
+                     onclick="event.stopPropagation()">
+                    {% if notification.like.user.profile and notification.like.user.profile.avatar %}
+                      <img src="{{ notification.like.user.profile.avatar.url }}" alt="{{ notification.like.user.username }} avatar"
+                           class="h-10 w-10 rounded-full object-cover ring-1 ring-white shadow-sm hover:ring-2 hover:ring-indigo-300 transition-all">
+                    {% else %}
+                      <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500 hover:bg-gray-300 transition-colors">
+                        {{ notification.like.user.username|first|upper }}
+                      </div>
+                    {% endif %}
+                  </a>
+                {% elif notification.notification_type == 'comment_like' %}
+                  <a href="{% url 'profile_public' notification.comment_like.user.username %}" 
+                     class="block" 
+                     onclick="event.stopPropagation()">
+                    {% if notification.comment_like.user.profile and notification.comment_like.user.profile.avatar %}
+                      <img src="{{ notification.comment_like.user.profile.avatar.url }}" alt="{{ notification.comment_like.user.username }} avatar"
+                           class="h-10 w-10 rounded-full object-cover ring-1 ring-white shadow-sm hover:ring-2 hover:ring-indigo-300 transition-all">
+                    {% else %}
+                      <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500 hover:bg-gray-300 transition-colors">
+                        {{ notification.comment_like.user.username|first|upper }}
+                      </div>
+                    {% endif %}
+                  </a>
+                {% endif %}
               </div>
               
               <!-- Content -->
               <div class="flex-1 min-w-0">
                 <div class="text-sm text-gray-900">
-                  <a href="{% url 'profile_public' notification.comment.user.username %}" 
-                     class="font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
-                     onclick="event.stopPropagation()">
-                    {{ notification.comment.user.username }}
-                  </a> commented on your review of 
-                  <a href="{% url 'places:restaurant_detail' notification.activity.restaurant.id %}" 
-                     class="text-indigo-600 hover:text-indigo-800 hover:underline"
-                     onclick="event.stopPropagation()">
-                    {{ notification.activity.restaurant.name }}
-                  </a>
+                  {% if notification.notification_type == 'comment' %}
+                    <a href="{% url 'profile_public' notification.comment.user.username %}" 
+                       class="font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
+                       onclick="event.stopPropagation()">
+                      {{ notification.comment.user.username }}
+                    </a> commented on your review of 
+                    <a href="{% url 'places:restaurant_detail' notification.activity.restaurant.id %}" 
+                       class="text-indigo-600 hover:text-indigo-800 hover:underline"
+                       onclick="event.stopPropagation()">
+                      {{ notification.activity.restaurant.name }}
+                    </a>
+                  {% elif notification.notification_type == 'review_like' %}
+                    <a href="{% url 'profile_public' notification.like.user.username %}" 
+                       class="font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
+                       onclick="event.stopPropagation()">
+                      {{ notification.like.user.username }}
+                    </a> liked your review of 
+                    <a href="{% url 'places:restaurant_detail' notification.activity.restaurant.id %}" 
+                       class="text-indigo-600 hover:text-indigo-800 hover:underline"
+                       onclick="event.stopPropagation()">
+                      {{ notification.activity.restaurant.name }}
+                    </a>
+                  {% elif notification.notification_type == 'comment_like' %}
+                    <a href="{% url 'profile_public' notification.comment_like.user.username %}" 
+                       class="font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
+                       onclick="event.stopPropagation()">
+                      {{ notification.comment_like.user.username }}
+                    </a> liked your comment on 
+                    <a href="{% url 'places:restaurant_detail' notification.activity.restaurant.id %}" 
+                       class="text-indigo-600 hover:text-indigo-800 hover:underline"
+                       onclick="event.stopPropagation()">
+                      {{ notification.activity.restaurant.name }}
+                    </a>
+                  {% endif %}
                 </div>
                 
-                {% if notification.activity and notification.activity.review and notification.activity.review.text %}
+                {% if notification.notification_type == 'comment' and notification.activity and notification.activity.review and notification.activity.review.text %}
+                  <div class="mt-2 text-sm text-gray-600">
+                    "{{ notification.activity.review.text|truncatechars:100 }}"
+                  </div>
+                {% elif notification.notification_type == 'comment_like' and notification.comment_like.comment.text %}
+                  <div class="mt-2 text-sm text-gray-600">
+                    "{{ notification.comment_like.comment.text|truncatechars:100 }}"
+                  </div>
+                {% elif notification.notification_type == 'review_like' and notification.activity and notification.activity.review and notification.activity.review.text %}
                   <div class="mt-2 text-sm text-gray-600">
                     "{{ notification.activity.review.text|truncatechars:100 }}"
                   </div>

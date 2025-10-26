@@ -118,10 +118,26 @@ class CommentLike(models.Model):
 
 
 class Notification(models.Model):
-    """Notifications for users when someone comments on their reviews."""
+    """Notifications for users when someone comments on their reviews or likes their content."""
+    NOTIFICATION_TYPES = [
+        ('comment', 'Comment'),
+        ('review_like', 'Review Like'),
+        ('comment_like', 'Comment Like'),
+    ]
+    
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
-    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="notifications")
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='comment')
+    
+    # For comment notifications
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="notifications", null=True, blank=True)
+    
+    # For like notifications
+    like = models.ForeignKey(Like, on_delete=models.CASCADE, related_name="notifications", null=True, blank=True)
+    comment_like = models.ForeignKey(CommentLike, on_delete=models.CASCADE, related_name="notifications", null=True, blank=True)
+    
+    # Always have activity for context
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="notifications")
+    
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
 
@@ -129,13 +145,27 @@ class Notification(models.Model):
         ordering = ("-created_at",)
 
     def __str__(self):
-        return f"Notification for {self.user.username} - {self.comment.user.username} commented"
+        if self.notification_type == 'comment':
+            return f"Notification for {self.user.username} - {self.comment.user.username} commented"
+        elif self.notification_type == 'review_like':
+            return f"Notification for {self.user.username} - {self.like.user.username} liked review"
+        elif self.notification_type == 'comment_like':
+            return f"Notification for {self.user.username} - {self.comment_like.user.username} liked comment"
+        return f"Notification for {self.user.username}"
 
     @property
     def message(self):
         """Generate the notification message."""
-        commenter_name = self.comment.user.profile.display_name if self.comment.user.profile.display_name else self.comment.user.username
-        return f"{commenter_name} commented on your review!"
+        if self.notification_type == 'comment':
+            commenter_name = self.comment.user.profile.display_name if self.comment.user.profile.display_name else self.comment.user.username
+            return f"{commenter_name} commented on your review!"
+        elif self.notification_type == 'review_like':
+            liker_name = self.like.user.profile.display_name if self.like.user.profile.display_name else self.like.user.username
+            return f"{liker_name} liked your review!"
+        elif self.notification_type == 'comment_like':
+            liker_name = self.comment_like.user.profile.display_name if self.comment_like.user.profile.display_name else self.comment_like.user.username
+            return f"{liker_name} liked your comment!"
+        return "You have a new notification"
 
 
 class Profile(models.Model):

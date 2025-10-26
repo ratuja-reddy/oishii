@@ -707,7 +707,12 @@ def notifications(request):
     notifications = (
         Notification.objects
         .filter(user=me)
-        .select_related('comment', 'comment__user', 'comment__user__profile', 'activity', 'activity__restaurant', 'activity__review')
+        .select_related(
+            'comment', 'comment__user', 'comment__user__profile', 
+            'like', 'like__user', 'like__user__profile',
+            'comment_like', 'comment_like__user', 'comment_like__user__profile',
+            'activity', 'activity__restaurant', 'activity__review'
+        )
         .order_by('-created_at')
     )
 
