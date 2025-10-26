@@ -19,7 +19,7 @@
         </div>
 
         <div class="ml-auto">
-            {% include "social/_follow_button.html" with target_user=u following_ids=following_ids %}
+            {% include "social/_friend_button.html" with target_user=u user_relationship=u.user_relationship %}
         </div>
       </li>
     {% endfor %}
