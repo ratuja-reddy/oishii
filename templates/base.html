@@ -11,71 +11,115 @@
   
   <!-- Custom color overrides -->
   <style>
+    /* Primary colors - Terracotta */
     .btn-primary {
-      background-color: #ffbe65 !important;
-      border-color: #ffbe65 !important;
+      background-color: #CA6145 !important;
+      border-color: #CA6145 !important;
     }
     .btn-primary:hover {
-      background-color: #ffb347 !important;
-      border-color: #ffb347 !important;
+      background-color: #B8553A !important;
+      border-color: #B8553A !important;
     }
+    
+    /* Secondary buttons - Dark Teal */
+    .btn-secondary {
+      background-color: #2F4F4F !important;
+      border-color: #2F4F4F !important;
+      color: #FFFFFF !important;
+    }
+    .btn-secondary:hover {
+      background-color: #1F3F3F !important;
+      border-color: #1F3F3F !important;
+    }
+    
+    /* Text colors */
     .text-primary {
-      color: #ffbe65 !important;
+      color: #CA6145 !important;
     }
-    .text-primary:hover {
-      color: #ffb347 !important;
+    .text-secondary {
+      color: #2F4F4F !important;
     }
-    .border-primary {
-      border-color: #ffbe65 !important;
+    .text-dark {
+      color: #1E1E1E !important;
     }
-    .bg-primary {
-      background-color: #ffbe65 !important;
+    
+    /* Background colors */
+    .bg-cream {
+      background-color: #FAF2EF !important;
     }
-    .ring-primary {
-      --tw-ring-color: #ffbe65 !important;
+    .bg-terracotta {
+      background-color: #CA6145 !important;
     }
+    .bg-dark-teal {
+      background-color: #2F4F4F !important;
+    }
+    
+    /* Override Tailwind defaults - Terracotta */
     .bg-indigo-600 {
-      background-color: #ffbe65 !important;
+      background-color: #CA6145 !important;
     }
     .bg-indigo-700 {
-      background-color: #ffb347 !important;
+      background-color: #B8553A !important;
     }
     .text-indigo-600 {
-      color: #ffbe65 !important;
+      color: #CA6145 !important;
     }
     .text-indigo-700 {
-      color: #ffb347 !important;
+      color: #B8553A !important;
+    }
+    .border-indigo-600 {
+      border-color: #CA6145 !important;
+    }
+    .ring-indigo-600 {
+      --tw-ring-color: #CA6145 !important;
+    }
+    .focus\:ring-indigo-600:focus {
+      --tw-ring-color: #CA6145 !important;
+    }
+    
+    /* Dark teal overrides */
+    .bg-blue-600 {
+      background-color: #2F4F4F !important;
+    }
+    .bg-blue-700 {
+      background-color: #1F3F3F !important;
+    }
+    .text-blue-600 {
+      color: #2F4F4F !important;
+    }
+    .text-blue-700 {
+      color: #1F3F3F !important;
+    }
+    .border-blue-600 {
+      border-color: #2F4F4F !important;
+    }
+    .ring-blue-600 {
+      --tw-ring-color: #2F4F4F !important;
+    }
+    .focus\:ring-blue-600:focus {
+      --tw-ring-color: #2F4F4F !important;
+    }
+    
+    /* Hover states */
+    .hover\:bg-indigo-700:hover {
+      background-color: #B8553A !important;
+    }
+    .hover\:bg-blue-700:hover {
+      background-color: #1F3F3F !important;
     }
     .hover\:text-indigo-700:hover {
-      color: #ffb347 !important;
+      color: #B8553A !important;
     }
-    .hover\:bg-indigo-700:hover {
-      background-color: #ffb347 !important;
+    .hover\:text-blue-700:hover {
+      color: #1F3F3F !important;
     }
-    .border-indigo-500 {
-      border-color: #ffbe65 !important;
-    }
-    .border-indigo-400 {
-      border-color: #ffbe65 !important;
-    }
-    .ring-indigo-500 {
-      --tw-ring-color: #ffbe65 !important;
-    }
-    .ring-indigo-400 {
-      --tw-ring-color: #ffbe65 !important;
-    }
-    .ring-indigo-300 {
-      --tw-ring-color: #ffbe65 !important;
-    }
-    .text-white {
-      color: #000000 !important;
-    }
-    button.text-white {
-      color: #000000 !important;
-    }
+    
+    /* White text on colored backgrounds */
     .bg-indigo-600 .text-white,
-    .bg-indigo-700 .text-white {
-      color: #000000 !important;
+    .bg-indigo-700 .text-white,
+    .bg-terracotta .text-white,
+    .bg-dark-teal .text-white {
+      color: #FFFFFF !important;
     }
   </style>
 
@@ -107,7 +151,7 @@
     });
   </script>
 </head>
-<body class="min-h-screen" style="background-color: #f4ebd9;">
+<body class="min-h-screen bg-cream">
 
   <!-- Main content -->
   <main class="max-w-xl mx-auto px-4 pt-4 pb-[88px]">
@@ -115,13 +159,13 @@
   </main>
 
   <!-- Bottom nav with floating center button -->
-  <nav class="fixed bottom-0 inset-x-0 z-50 bg-white/90 backdrop-blur border-t border-gray-200 shadow">
+  <nav class="fixed bottom-0 inset-x-0 z-50 bg-cream/90 backdrop-blur border-t border-gray-200 shadow">
     <div class="relative max-w-xl mx-auto flex justify-between items-center text-sm px-8">
 
       <!-- Left side -->
       <div class="flex-1 flex justify-evenly">
         <a href="{% url 'feed' %}"
-           class="flex flex-col items-center py-3 relative {% if active_tab == 'home' %}text-indigo-600 font-semibold{% else %}text-gray-500{% endif %}">
+           class="flex flex-col items-center py-3 relative {% if active_tab == 'home' %}text-primary font-semibold{% else %}text-dark{% endif %}">
           Home
           <!-- Notification badge for home tab -->
           <span id="home-notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">
@@ -129,7 +173,7 @@
           </span>
         </a>
         <a href="{% url 'my_restaurants' %}"
-           class="flex flex-col items-center py-3 {% if active_tab == 'my' %}text-indigo-600 font-semibold{% else %}text-gray-500{% endif %}">
+           class="flex flex-col items-center py-3 {% if active_tab == 'my' %}text-primary font-semibold{% else %}text-dark{% endif %}">
           My Spots
         </a>
       </div>
@@ -137,7 +181,7 @@
       <!-- Floating Review button -->
       <div class="absolute inset-x-0 -top-7 flex justify-center pointer-events-none">
         <a href="{% url 'review_tab' %}"
-           class="pointer-events-auto bg-indigo-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg ring-4 ring-white text-xl font-bold
+           class="pointer-events-auto bg-terracotta text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg ring-4 ring-white text-xl font-bold
                   transition transform {% if active_tab == 'review' %}scale-105{% else %}hover:scale-105{% endif %}">
           +
         </a>
@@ -146,11 +190,11 @@
       <!-- Right side -->
       <div class="flex-1 flex justify-evenly">
         <a href="{% url 'discover' %}"
-           class="flex flex-col items-center py-3 {% if active_tab == 'discover' %}text-indigo-600 font-semibold{% else %}text-gray-500{% endif %}">
+           class="flex flex-col items-center py-3 {% if active_tab == 'discover' %}text-primary font-semibold{% else %}text-dark{% endif %}">
           Discover
         </a>
         <a href="{% url 'profile_me' %}"
-           class="flex flex-col items-center py-3 {% if active_tab == 'profile' %}text-indigo-600 font-semibold{% else %}text-gray-500{% endif %}">
+           class="flex flex-col items-center py-3 {% if active_tab == 'profile' %}text-primary font-semibold{% else %}text-dark{% endif %}">
           My Profile
         </a>
       </div>
