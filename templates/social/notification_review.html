@@ -164,6 +164,14 @@
         </svg>
         <span class="text-sm font-medium">{{ comments.count }}</span>
       </button>
+
+      <!-- Add to list button -->
+      <button class="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
+              hx-get="{% url 'list_picker' activity.restaurant.id %}"
+              hx-target="#modal"
+              hx-swap="innerHTML">
+        💾 Add
+      </button>
     </div>
 
     <!-- Comments section -->
