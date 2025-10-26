@@ -339,7 +339,7 @@ def create_list(request):
 def list_detail(request, list_id):
     # First try to get the list
     lst = get_object_or_404(List, pk=list_id)
-    
+
     # Check permissions
     if lst.owner == request.user:
         # User owns the list - can view it
@@ -354,12 +354,12 @@ def list_detail(request, list_id):
             Q(requesting_user=request.user, target_user=lst.owner, status='accepted') |
             Q(requesting_user=lst.owner, target_user=request.user, status='accepted')
         ).first()
-        
+
         if not friendship:
             # Not friends and list is private - deny access
             from django.http import Http404
             raise Http404("List not found")
-    
+
     items = (Pin.objects.select_related("restaurant")
              .filter(list=lst).order_by("-created_at"))
     return render(request, "places/list_detail.html", {"lst": lst, "items": items})
