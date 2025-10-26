@@ -390,12 +390,6 @@ def add_comment(request, activity_id):
 # ---------- Notifications ----------
 
 @login_required
-def notifications(request):
-    """Get user's notifications."""
-    notifications = request.user.notifications.all()[:10]  # Last 10 notifications
-    return render(request, "social/_notifications.html", {"notifications": notifications})
-
-@login_required
 def mark_notification_read(request, notification_id):
     """Mark a notification as read."""
     notification = get_object_or_404(Notification, id=notification_id, user=request.user)
@@ -416,32 +410,32 @@ def notification_count(request):
 def notification_review(request, activity_id):
     """Show a single review in feed format when clicked from notification."""
     activity = get_object_or_404(Activity, id=activity_id)
-    
+
     # Mark the notification as read if it exists
     Notification.objects.filter(
-        user=request.user, 
+        user=request.user,
         activity=activity,
         notification_type__in=['review_like', 'comment_like']
     ).update(is_read=True)
-    
+
     # Get the review and related data
     review = activity.review
     if not review:
         return redirect('feed')
-    
+
     # Get comments for this activity
     comments = Comment.objects.filter(activity=activity).select_related('user', 'user__profile').order_by('created_at')
-    
+
     # Get likes for this activity
     likes = Like.objects.filter(activity=activity).select_related('user', 'user__profile')
-    
+
     # Get comment likes
     comment_likes = CommentLike.objects.filter(comment__activity=activity).select_related('user', 'user__profile')
-    
+
     # Get user's liked activities and comments for template
     user_liked_activities = set(Like.objects.filter(user=request.user, activity=activity).values_list('activity_id', flat=True))
     user_liked_comments = set(CommentLike.objects.filter(user=request.user, comment__activity=activity).values_list('comment_id', flat=True))
-    
+
     context = {
         'activity': activity,
         'review': review,
@@ -452,7 +446,7 @@ def notification_review(request, activity_id):
         'user_liked_comments': user_liked_comments,
         'show_back_button': True,
     }
-    
+
     return render(request, "social/notification_review.html", context)
 
 
@@ -752,7 +746,7 @@ def notifications(request):
         Notification.objects
         .filter(user=me)
         .select_related(
-            'comment', 'comment__user', 'comment__user__profile', 
+            'comment', 'comment__user', 'comment__user__profile',
             'like', 'like__user', 'like__user__profile',
             'comment_like', 'comment_like__user', 'comment_like__user__profile',
             'activity', 'activity__restaurant', 'activity__review'
