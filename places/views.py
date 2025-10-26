@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import models
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.views.decorators.http import require_http_methods
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
@@ -111,15 +112,22 @@ def discover(request):
             models.Q(cuisine__icontains=search_query) |
             models.Q(city__icontains=search_query) |
             models.Q(address__icontains=search_query)
-        ).order_by("-id")[:24]
+        ).order_by("-id")
     else:
-        restaurants = Restaurant.objects.order_by("-id")[:24]
+        restaurants = Restaurant.objects.order_by("-id")
+
+    # Get restaurants with coordinates for the map
+    restaurants_with_coords = Restaurant.objects.filter(
+        lat__isnull=False, 
+        lng__isnull=False
+    ).exclude(lat=0, lng=0)  # Exclude invalid coordinates
 
     return render(
         request,
         "places/discover.html",
         {
             "restaurants": restaurants,
+            "restaurants_with_coords": restaurants_with_coords,
             "active_tab": "discover",
             "search_query": search_query,
             "API_KEY": os.getenv("GOOGLE_MAPS_API_KEY")
@@ -445,3 +453,41 @@ def review_thanks(request):
         "places/review_thanks.html",
         {"active_tab": "home"},
     )
+
+
+# -------------------
+# API ENDPOINTS
+# -------------------
+
+@require_http_methods(["GET"])
+def restaurant_autocomplete(request):
+    """API endpoint for restaurant autocomplete search."""
+    query = request.GET.get('q', '').strip()
+    
+    if len(query) < 2:
+        return JsonResponse({'restaurants': []})
+    
+    restaurants = Restaurant.objects.filter(
+        Q(name__icontains=query) |
+        Q(cuisine__icontains=query) |
+        Q(city__icontains=query) |
+        Q(address__icontains=query)
+    ).filter(
+        lat__isnull=False, 
+        lng__isnull=False
+    ).exclude(lat=0, lng=0)[:10]  # Limit to 10 results
+    
+    results = []
+    for restaurant in restaurants:
+        results.append({
+            'id': restaurant.id,
+            'name': restaurant.name,
+            'cuisine': restaurant.cuisine or '',
+            'address': restaurant.address or '',
+            'city': restaurant.city or '',
+            'lat': float(restaurant.lat),
+            'lng': float(restaurant.lng),
+            'url': reverse('places:restaurant_detail', args=[restaurant.id])
+        })
+    
+    return JsonResponse({'restaurants': results})
