@@ -25,6 +25,7 @@ urlpatterns = [
     # social views
     path("me/", sviews.profile_me, name="profile_me"),
     path("friends/", sviews.friends, name="friends"),
+    path("friends/<str:username>/", sviews.friends, name="friends_user"),
     path("friends/find/", sviews.find_friends, name="friends_find"),                 # page
     path("friends/find/search/", sviews.find_friends_search, name="friends_find_search"),  # HTMX results
     path("friends/delete/<int:user_id>/", sviews.delete_friend, name="delete_friend"),     # Delete friend

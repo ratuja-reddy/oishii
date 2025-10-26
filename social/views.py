@@ -170,28 +170,53 @@ def profile_me(request):
 
 
 @login_required
-def friends(request):
+def friends(request, username=None):
     me = request.user
+    
+    # If username is provided, show that user's friends
+    if username:
+        target_user = get_object_or_404(User, username=username)
+        # Only show their friends if you're friends with them
+        friendship = Friend.objects.filter(
+            Q(requesting_user=me, target_user=target_user) | Q(requesting_user=target_user, target_user=me),
+            status='accepted'
+        ).first()
+        
+        if not friendship:
+            messages.error(request, "You can only see friends of people you're friends with.")
+            return redirect('profile_public', username=username)
+        
+        # Get accepted friends of the target user
+        accepted_friends = Friend.objects.filter(
+            Q(requesting_user=target_user, status='accepted') | Q(target_user=target_user, status='accepted')
+        ).select_related('requesting_user__profile', 'target_user__profile').order_by('-updated_at')
+        
+        # No pending requests when viewing someone else's friends
+        pending_requests = Friend.objects.none()
+        received_requests = Friend.objects.none()
+        show_requests = False
+    else:
+        # Show your own friends
+        target_user = me
+        accepted_friends = Friend.objects.filter(
+            Q(requesting_user=me, status='accepted') | Q(target_user=me, status='accepted')
+        ).select_related('requesting_user__profile', 'target_user__profile').order_by('-updated_at')
 
-    # Get accepted friends (both directions)
-    accepted_friends = Friend.objects.filter(
-        Q(requesting_user=me, status='accepted') | Q(target_user=me, status='accepted')
-    ).select_related('requesting_user__profile', 'target_user__profile').order_by('-updated_at')
+        # Get pending friend requests sent by me
+        pending_requests = Friend.objects.filter(
+            requesting_user=me, status='pending'
+        ).select_related('target_user__profile').order_by('-updated_at')
 
-    # Get pending friend requests sent by me
-    pending_requests = Friend.objects.filter(
-        requesting_user=me, status='pending'
-    ).select_related('target_user__profile').order_by('-updated_at')
-
-    # Get pending friend requests received by me
-    received_requests = Friend.objects.filter(
-        target_user=me, status='pending'
-    ).select_related('requesting_user__profile').order_by('-updated_at')
+        # Get pending friend requests received by me
+        received_requests = Friend.objects.filter(
+            target_user=me, status='pending'
+        ).select_related('requesting_user__profile').order_by('-updated_at')
+        show_requests = True
 
     # Extract user objects for accepted friends
     friends_list = []
     for friendship in accepted_friends:
-        friend_user = friendship.target_user if friendship.requesting_user == me else friendship.requesting_user
+        friend_user = friendship.target_user if friendship.requesting_user == target_user else friendship.requesting_user
         friends_list.append({
             'user': friend_user,
             'friendship': friendship,
@@ -214,6 +239,8 @@ def friends(request):
         'friends_count': len(friends_list),
         'pending_count': len(pending_list),
         'received_count': received_requests.count(),
+        'target_user': target_user,
+        'show_requests': show_requests,
     }
 
     return render(request, "social/friends.html", context)
@@ -252,6 +279,19 @@ def profile_public(request, username: str):
         .order_by('-created_at')[:20]
     )
 
+    # Get lists for the Spots tab
+    # Show all lists if they're friends, otherwise only public lists
+    from places.models import List
+    lists_query = List.objects.filter(owner=person)
+    if not is_friend:
+        lists_query = lists_query.filter(is_public=True)
+    
+    lists = (
+        lists_query
+        .prefetch_related('pins__restaurant')
+        .order_by('title')
+    )
+
     return render(
         request,
         "social/profile_public.html",
@@ -260,6 +300,7 @@ def profile_public(request, username: str):
             "is_friend": is_friend,
             "is_pending_request": is_pending_request,
             "activities": activities,
+            "lists": lists,
         },
     )
 # ---------- Feed ----------
@@ -628,6 +669,23 @@ def send_friend_request(request, user_id: int):
             status='pending'
         )
 
+    # If HTMX request, return updated button HTML
+    if request.headers.get('HX-Request'):
+        # Check current friendship status for the button
+        friendship = Friend.objects.filter(
+            Q(requesting_user=request.user, target_user=target_user) |
+            Q(requesting_user=target_user, target_user=request.user)
+        ).first()
+        
+        context = {
+            'person': target_user,
+            'is_friend': friendship and friendship.status == 'accepted',
+            'is_pending_request': friendship and friendship.status == 'pending',
+            'friendship': friendship,
+        }
+        
+        return render(request, "social/_profile_friend_button.html", context)
+    
     # Return to the find friends page
     return redirect('friends_find')
 

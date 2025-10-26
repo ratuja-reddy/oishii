@@ -3,6 +3,7 @@ import os
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import models
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -336,7 +337,29 @@ def create_list(request):
     return render(request, "places/_list_create_modal.html")
 @login_required
 def list_detail(request, list_id):
-    lst = get_object_or_404(List, pk=list_id, owner=request.user)
+    # First try to get the list
+    lst = get_object_or_404(List, pk=list_id)
+    
+    # Check permissions
+    if lst.owner == request.user:
+        # User owns the list - can view it
+        pass
+    elif lst.is_public:
+        # List is public - anyone can view it
+        pass
+    else:
+        # List is private and user doesn't own it - check if they're friends
+        from social.models import Friend
+        friendship = Friend.objects.filter(
+            Q(requesting_user=request.user, target_user=lst.owner, status='accepted') |
+            Q(requesting_user=lst.owner, target_user=request.user, status='accepted')
+        ).first()
+        
+        if not friendship:
+            # Not friends and list is private - deny access
+            from django.http import Http404
+            raise Http404("List not found")
+    
     items = (Pin.objects.select_related("restaurant")
              .filter(list=lst).order_by("-created_at"))
     return render(request, "places/list_detail.html", {"lst": lst, "items": items})

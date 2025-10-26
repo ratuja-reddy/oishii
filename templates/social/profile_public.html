@@ -51,30 +51,11 @@
 
           <div class="mt-3 flex flex-wrap gap-2">
             {% if request.user.id != person.id %}
-              {% if is_friend %}
-                <form method="post" action="{% url 'delete_friend' person.id %}" class="inline">
-                  {% csrf_token %}
-                  <button type="submit" 
-                          onclick="return confirm('Are you sure you want to remove {{ person.username }} from your friends?')"
-                          class="px-3 py-1.5 rounded-md border border-red-300 text-sm bg-white text-red-600 hover:bg-red-50">
-                    Remove Friend
-                  </button>
-                </form>
-              {% elif is_pending_request %}
-                <span class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-gray-100 text-gray-500">
-                  Request Pending
-                </span>
-              {% else %}
-                <form method="post" action="{% url 'send_friend_request' person.id %}" class="inline">
-                  {% csrf_token %}
-                  <button type="submit" 
-                          class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white hover:bg-gray-50">
-                    Add Friend
-                  </button>
-                </form>
-              {% endif %}
+              <div id="friend-button-container">
+                {% include "social/_profile_friend_button.html" %}
+              </div>
             {% endif %}
-            <a href="{% url 'friends' %}"
+            <a href="{% url 'friends_user' person.username %}"
                class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white text-gray-700 hover:bg-gray-50">
               Friends
             </a>
@@ -92,6 +73,9 @@
       </button>
       <button id="updates-tab" class="px-4 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">
         Updates
+      </button>
+      <button id="spots-tab" class="px-4 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">
+        Lists
       </button>
     </div>
   </div>
@@ -328,6 +312,67 @@
     </div>
   </div>
 
+  <!-- Lists Tab Content -->
+  <div id="spots-content" class="hidden">
+    <div class="space-y-4">
+      {% if lists %}
+        <!-- Pin "Visited" list to the top -->
+        {% for lst in lists %}
+          {% if lst.title == "Visited" %}
+            <a href="{% url 'list_detail' lst.id %}" class="block bg-white rounded-xl border border-gray-200 p-5 hover:shadow-sm transition-all">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ lst.title }}</h3>
+                    <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                      {{ lst.is_public|yesno:"Public,Private" }}
+                    </span>
+                  </div>
+                  <div class="text-sm text-gray-500">{{ lst.pins.count }} places</div>
+                </div>
+              </div>
+            </a>
+          {% endif %}
+        {% endfor %}
+        
+        <!-- Show all other lists -->
+        {% for lst in lists %}
+          {% if lst.title != "Visited" %}
+          <a href="{% url 'list_detail' lst.id %}" class="block bg-white rounded-xl border border-gray-200 p-5 hover:shadow-sm transition-all">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <h3 class="text-lg font-semibold text-gray-900">{{ lst.title }}</h3>
+                  <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                    {{ lst.is_public|yesno:"Public,Private" }}
+                  </span>
+                </div>
+                <div class="text-sm text-gray-500">{{ lst.pins.count }} places</div>
+              </div>
+            </div>
+          </a>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="bg-white rounded-xl border border-gray-200 p-8 text-center">
+          <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No lists yet</h3>
+          <p class="text-gray-600">
+            {% if is_friend %}
+              This user hasn't created any lists yet.
+            {% else %}
+              Follow this user to see all their lists.
+            {% endif %}
+          </p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
 </div>
 
 <!-- Image Modal -->
@@ -342,22 +387,36 @@
 
 <script>
 // Tab switching
-document.getElementById('about-tab').addEventListener('click', function() {
-  document.getElementById('about-content').classList.remove('hidden');
+function switchToTab(activeTabId, activeContentId) {
+  // Hide all content
+  document.getElementById('about-content').classList.add('hidden');
   document.getElementById('updates-content').classList.add('hidden');
-  this.classList.add('text-gray-900', 'border-indigo-500');
-  this.classList.remove('text-gray-500', 'border-transparent');
-  document.getElementById('updates-tab').classList.remove('text-gray-900', 'border-indigo-500');
+  document.getElementById('spots-content').classList.add('hidden');
+  
+  // Reset all tabs
+  document.getElementById('about-tab').classList.add('text-gray-500', 'border-transparent');
+  document.getElementById('about-tab').classList.remove('text-gray-900', 'border-indigo-500');
   document.getElementById('updates-tab').classList.add('text-gray-500', 'border-transparent');
+  document.getElementById('updates-tab').classList.remove('text-gray-900', 'border-indigo-500');
+  document.getElementById('spots-tab').classList.add('text-gray-500', 'border-transparent');
+  document.getElementById('spots-tab').classList.remove('text-gray-900', 'border-indigo-500');
+  
+  // Show active content and tab
+  document.getElementById(activeContentId).classList.remove('hidden');
+  document.getElementById(activeTabId).classList.add('text-gray-900', 'border-indigo-500');
+  document.getElementById(activeTabId).classList.remove('text-gray-500', 'border-transparent');
+}
+
+document.getElementById('about-tab').addEventListener('click', function() {
+  switchToTab('about-tab', 'about-content');
 });
 
 document.getElementById('updates-tab').addEventListener('click', function() {
-  document.getElementById('updates-content').classList.remove('hidden');
-  document.getElementById('about-content').classList.add('hidden');
-  this.classList.add('text-gray-900', 'border-indigo-500');
-  this.classList.remove('text-gray-500', 'border-transparent');
-  document.getElementById('about-tab').classList.remove('text-gray-900', 'border-indigo-500');
-  document.getElementById('about-tab').classList.add('text-gray-500', 'border-transparent');
+  switchToTab('updates-tab', 'updates-content');
+});
+
+document.getElementById('spots-tab').addEventListener('click', function() {
+  switchToTab('spots-tab', 'spots-content');
 });
 
 // Image modal functions
