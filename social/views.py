@@ -298,6 +298,7 @@ def profile_public(request, username: str):
             "person": person,
             "is_friend": is_friend,
             "is_pending_request": is_pending_request,
+            "friendship": friendship,
             "activities": activities,
             "lists": lists,
         },

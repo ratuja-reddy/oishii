@@ -19,9 +19,10 @@ Inputs:
 {% elif is_pending_request %}
   {% if friendship.requesting_user == request.user %}
     <!-- Current user sent the request -->
-    <span class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white text-gray-500">
+    <button type="button" disabled
+            class="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white text-gray-500 cursor-default">
       Request Sent
-    </span>
+    </button>
   {% else %}
     <!-- Other user sent the request -->
     <div class="flex gap-2">
