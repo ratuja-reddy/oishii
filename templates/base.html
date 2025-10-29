@@ -169,43 +169,68 @@
   </main>
 
   <!-- Bottom nav with floating center button -->
-  <nav class="fixed bottom-0 inset-x-0 z-50 bg-cream/90 backdrop-blur border-t border-gray-200 shadow">
-    <div class="relative max-w-xl mx-auto flex justify-between items-center text-sm px-8">
+  <nav class="fixed bottom-0 inset-x-0 z-50 bg-cream/90 backdrop-blur border-t border-gray-200 shadow pb-safe">
+    <div class="relative max-w-xl mx-auto flex justify-between items-center text-sm px-8 pb-1 pt-2">
 
       <!-- Left side -->
       <div class="flex-1 flex justify-evenly">
+        <!-- Home -->
         <a href="{% url 'feed' %}"
-           class="flex flex-col items-center py-3 relative {% if active_tab == 'home' %}text-primary font-semibold{% else %}text-dark{% endif %}">
-          Home
+           class="flex flex-col items-center py-1 relative {% if active_tab == 'home' %}text-dark font-bold{% else %}text-dark font-normal{% endif %}">
+          {% if active_tab == 'home' %}
+            <img src="{% static 'img/nav/home-focused.png' %}" alt="Home" class="w-6 h-6 mb-1">
+          {% else %}
+            <img src="{% static 'img/nav/home-unfocused.png' %}" alt="Home" class="w-6 h-6 mb-1">
+          {% endif %}
+          <span>Home</span>
           <!-- Notification badge for home tab -->
           <span id="home-notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">
             <span id="home-notification-count">0</span>
           </span>
         </a>
+        
+        <!-- My Spots -->
         <a href="{% url 'my_restaurants' %}"
-           class="flex flex-col items-center py-3 {% if active_tab == 'my' %}text-primary font-semibold{% else %}text-dark{% endif %}">
-          My Spots
+           class="flex flex-col items-center py-1 {% if active_tab == 'my' %}text-dark font-bold{% else %}text-dark font-normal{% endif %}">
+          {% if active_tab == 'my' %}
+            <img src="{% static 'img/nav/my-spots-focused.png' %}" alt="My Spots" class="w-6 h-6 mb-1">
+          {% else %}
+            <img src="{% static 'img/nav/my-spots-unfocused.png' %}" alt="My Spots" class="w-6 h-6 mb-1">
+          {% endif %}
+          <span>My Spots</span>
         </a>
       </div>
 
       <!-- Floating Review button -->
       <div class="absolute inset-x-0 -top-7 flex justify-center pointer-events-none">
         <a href="{% url 'review_tab' %}"
-           class="pointer-events-auto bg-terracotta text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg ring-4 ring-white text-xl font-bold
-                  transition transform {% if active_tab == 'review' %}scale-105{% else %}hover:scale-105{% endif %}">
+           class="pointer-events-auto rounded-full w-12 h-12 flex items-center justify-center shadow-lg ring-4 ring-white text-xl font-bold transition transform {% if active_tab == 'review' %}bg-white border-2 border-terracotta text-terracotta scale-105{% else %}bg-terracotta text-white hover:scale-105{% endif %}">
           +
         </a>
       </div>
 
       <!-- Right side -->
       <div class="flex-1 flex justify-evenly">
+        <!-- Discover -->
         <a href="{% url 'discover' %}"
-           class="flex flex-col items-center py-3 {% if active_tab == 'discover' %}text-primary font-semibold{% else %}text-dark{% endif %}">
-          Discover
+           class="flex flex-col items-center py-1 {% if active_tab == 'discover' %}text-dark font-bold{% else %}text-dark font-normal{% endif %}">
+          {% if active_tab == 'discover' %}
+            <img src="{% static 'img/nav/discover-focused.png' %}" alt="Discover" class="w-6 h-6 mb-1">
+          {% else %}
+            <img src="{% static 'img/nav/discover-unfocused.png' %}" alt="Discover" class="w-6 h-6 mb-1">
+          {% endif %}
+          <span>Discover</span>
         </a>
+        
+        <!-- Profile -->
         <a href="{% url 'profile_me' %}"
-           class="flex flex-col items-center py-3 {% if active_tab == 'profile' %}text-primary font-semibold{% else %}text-dark{% endif %}">
-          My Profile
+           class="flex flex-col items-center py-1 {% if active_tab == 'profile' %}text-dark font-bold{% else %}text-dark font-normal{% endif %}">
+          {% if active_tab == 'profile' %}
+            <img src="{% static 'img/nav/profile-focused.png' %}" alt="Profile" class="w-6 h-6 mb-1">
+          {% else %}
+            <img src="{% static 'img/nav/profile-unfocused.png' %}" alt="Profile" class="w-6 h-6 mb-1">
+          {% endif %}
+          <span>Profile</span>
         </a>
       </div>
 
