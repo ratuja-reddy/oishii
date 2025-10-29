@@ -171,7 +171,7 @@
           <p class="text-sm text-gray-600 mb-2">Drop photos here or click to browse</p>
           <input type="file" name="{{ form.photos.name }}" id="{{ form.photos.id_for_label }}" multiple accept="image/*" class="hidden">
           <button type="button" onclick="document.getElementById('{{ form.photos.id_for_label }}').click()" 
-                  class="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors" style="color: white !important;">
+                  class="px-4 py-2 bg-dark-teal text-white rounded-lg hover:bg-blue-700 transition-colors" style="color: white !important;">
             Choose Photos
           </button>
         </div>
@@ -181,7 +181,7 @@
       <!-- Submit Button -->
       <div class="pt-4 border-t border-gray-200">
         <button type="submit" 
-                class="w-full px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors" style="color: white !important;">
+                class="w-full px-6 py-3 bg-dark-teal text-white font-medium rounded-lg hover:bg-blue-700 transition-colors" style="color: white !important;">
           <span class="flex items-center justify-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v9"></path>
@@ -229,7 +229,7 @@
                     <span class="text-sm text-gray-500">{{ rv.created_at|date:"M j, Y" }}</span>
                     <span class="text-gray-300">•</span>
                     {% if rv.would_go_again %}
-                      <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium">
+                      <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-dark-teal text-sm font-medium">
                         <span>👍</span>
                         <span>Would go again</span>
                       </span>
