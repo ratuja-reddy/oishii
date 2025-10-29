@@ -178,9 +178,9 @@
         <a href="{% url 'feed' %}"
            class="flex flex-col items-center py-1 relative {% if active_tab == 'home' %}text-dark font-bold{% else %}text-dark font-normal{% endif %}">
           {% if active_tab == 'home' %}
-            <img src="{% static 'img/nav/home-focused.png' %}" alt="Home" class="w-6 h-6 mb-1">
+            <img src="{% static 'img/nav/home-focused.svg' %}" alt="Home" class="w-6 h-6 mb-1">
           {% else %}
-            <img src="{% static 'img/nav/home-unfocused.png' %}" alt="Home" class="w-6 h-6 mb-1">
+            <img src="{% static 'img/nav/home-unfocused.svg' %}" alt="Home" class="w-6 h-6 mb-1">
           {% endif %}
           <span>Home</span>
           <!-- Notification badge for home tab -->
@@ -193,9 +193,9 @@
         <a href="{% url 'my_restaurants' %}"
            class="flex flex-col items-center py-1 {% if active_tab == 'my' %}text-dark font-bold{% else %}text-dark font-normal{% endif %}">
           {% if active_tab == 'my' %}
-            <img src="{% static 'img/nav/my-spots-focused.png' %}" alt="My Spots" class="w-6 h-6 mb-1">
+            <img src="{% static 'img/nav/my-spots-focused.svg' %}" alt="My Spots" class="w-6 h-6 mb-1">
           {% else %}
-            <img src="{% static 'img/nav/my-spots-unfocused.png' %}" alt="My Spots" class="w-6 h-6 mb-1">
+            <img src="{% static 'img/nav/my-spots-unfocused.svg' %}" alt="My Spots" class="w-6 h-6 mb-1">
           {% endif %}
           <span>My Spots</span>
         </a>
@@ -215,9 +215,9 @@
         <a href="{% url 'discover' %}"
            class="flex flex-col items-center py-1 {% if active_tab == 'discover' %}text-dark font-bold{% else %}text-dark font-normal{% endif %}">
           {% if active_tab == 'discover' %}
-            <img src="{% static 'img/nav/discover-focused.png' %}" alt="Discover" class="w-6 h-6 mb-1">
+            <img src="{% static 'img/nav/discover-focused.svg' %}" alt="Discover" class="w-6 h-6 mb-1">
           {% else %}
-            <img src="{% static 'img/nav/discover-unfocused.png' %}" alt="Discover" class="w-6 h-6 mb-1">
+            <img src="{% static 'img/nav/discover-unfocused.svg' %}" alt="Discover" class="w-6 h-6 mb-1">
           {% endif %}
           <span>Discover</span>
         </a>
@@ -226,9 +226,9 @@
         <a href="{% url 'profile_me' %}"
            class="flex flex-col items-center py-1 {% if active_tab == 'profile' %}text-dark font-bold{% else %}text-dark font-normal{% endif %}">
           {% if active_tab == 'profile' %}
-            <img src="{% static 'img/nav/profile-focused.png' %}" alt="Profile" class="w-6 h-6 mb-1">
+            <img src="{% static 'img/nav/profile-focused.svg' %}" alt="Profile" class="w-6 h-6 mb-1">
           {% else %}
-            <img src="{% static 'img/nav/profile-unfocused.png' %}" alt="Profile" class="w-6 h-6 mb-1">
+            <img src="{% static 'img/nav/profile-unfocused.svg' %}" alt="Profile" class="w-6 h-6 mb-1">
           {% endif %}
           <span>Profile</span>
         </a>
