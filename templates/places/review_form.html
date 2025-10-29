@@ -122,7 +122,7 @@
       <div id="drop" class="rounded-2xl border-2 border-dashed border-gray-300 p-6 text-center hover:border-gray-400 transition">
         <p class="text-sm text-gray-600">Drag & drop or pick files</p>
         <div class="mt-3">
-          {{ form.photos|add_class:"mx-auto block text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-gray-900 file:text-white" }}
+          {{ form.photos|add_class:"mx-auto block text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-dark-teal file:text-white" }}
         </div>
       </div>
       <div id="previews" class="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-3"></div>
@@ -134,7 +134,7 @@
     <div class="fixed bottom-4 left-0 right-0 px-4">
       <div class="mx-auto max-w-3xl bg-white/90 backdrop-blur rounded-2xl shadow ring-1 ring-black/5 p-3 flex items-center justify-between">
         <a href="{% url 'places:restaurant_detail' restaurant.pk %}" class="text-sm text-gray-600 hover:text-gray-800">Cancel</a>
-        <button id="saveBtn" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 text-white hover:bg-black transition disabled:opacity-40 disabled:cursor-not-allowed" style="color: white !important;">
+        <button id="saveBtn" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-dark-teal text-white hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed" style="color: white !important;">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm4.707 8.293-5.25 5.25a1 1 0 0 1-1.414 0l-2.25-2.25a1 1 0 1 1 1.414-1.414l1.543 1.543 4.543-4.543a1 1 0 0 1 1.414 1.414Z"/></svg>
           Save review
         </button>
