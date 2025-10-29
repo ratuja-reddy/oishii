@@ -1,9 +1,9 @@
 {% with total=a.likes.count %}
-<form id="like-{{ a.id }}"
+<form id="like-form-{{ a.id }}"
       hx-post="{% url 'toggle_like' a.id %}"
       hx-target="#like-{{ a.id }}"
-      hx-swap="outerHTML"
-      class="inline">
+      hx-swap="innerHTML"
+      class="inline relative likes-button-container group">
   {% csrf_token %}
   <button type="submit"
           class="px-3 py-1 rounded-full text-sm border
@@ -14,5 +14,10 @@
                  {% endif %}">
     ❤️ {{ total }}
   </button>
+  {% if total > 0 %}
+    <div class="likes-tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
+      {% include "social/_likes_tooltip.html" with likes=a.likes.all %}
+    </div>
+  {% endif %}
 </form>
 {% endwith %}
