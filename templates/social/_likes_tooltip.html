@@ -1,0 +1,36 @@
+<div class="bg-white rounded-lg shadow-lg border border-gray-200 p-3 max-w-xs">
+  {% if likes %}
+    <div class="space-y-2 max-h-64 overflow-y-auto">
+      {% for like in likes %}
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium flex-shrink-0">
+            {% if like.user.profile and like.user.profile.avatar %}
+              <img src="{{ like.user.profile.avatar.url }}" alt="{{ like.user.username }}" class="w-6 h-6 rounded-full object-cover">
+            {% else %}
+              {{ like.user.first_name|first|default:like.user.username|first|upper }}
+            {% endif %}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium text-sm text-gray-900 truncate">
+              {% if like.user.profile and like.user.profile.display_name %}
+                {{ like.user.profile.display_name }}
+              {% elif like.user.first_name %}
+                {{ like.user.first_name }}
+              {% else %}
+                {{ like.user.username }}
+              {% endif %}
+            </div>
+            <div class="text-xs text-gray-500 truncate">
+              @{{ like.user.username }}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-sm text-gray-500">
+      No likes yet
+    </div>
+  {% endif %}
+</div>
+

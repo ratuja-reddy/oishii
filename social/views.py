@@ -96,7 +96,17 @@ def profile_me(request):
                 "comments",
                 queryset=Comment.objects
                     .select_related("user", "user__profile")
+                    .prefetch_related(
+                        Prefetch(
+                            "likes",
+                            queryset=CommentLike.objects.select_related("user", "user__profile")
+                        )
+                    )
                     .order_by("created_at")
+            ),
+            Prefetch(
+                "likes",
+                queryset=Like.objects.select_related("user", "user__profile")
             ),
             "review__photos"
         )
@@ -338,7 +348,17 @@ def feed(request):
                 "comments",
                 queryset=Comment.objects
                     .select_related("user", "user__profile")
+                    .prefetch_related(
+                        Prefetch(
+                            "likes",
+                            queryset=CommentLike.objects.select_related("user", "user__profile")
+                        )
+                    )
                     .order_by("created_at")
+            ),
+            Prefetch(
+                "likes",
+                queryset=Like.objects.select_related("user", "user__profile")
             ),
             "review__photos"
         )
@@ -369,6 +389,8 @@ def toggle_like(request, pk):
     Returns the replaced like button partial.
     """
     activity = get_object_or_404(Activity, pk=pk)
+    
+    # Toggle like
     like, created = Like.objects.get_or_create(user=request.user, activity=activity)
     if not created:
         like.delete()
@@ -376,6 +398,14 @@ def toggle_like(request, pk):
     else:
         liked_by_me = True
 
+    # Refresh the activity with prefetched likes for the tooltip
+    activity = Activity.objects.prefetch_related(
+        Prefetch(
+            "likes",
+            queryset=Like.objects.select_related("user", "user__profile")
+        )
+    ).get(pk=pk)
+    
     # Attach flag expected by the partial
     activity.liked_by_me = liked_by_me
 
@@ -389,6 +419,8 @@ def toggle_comment_like(request, pk):
     Returns the replaced comment like button partial.
     """
     comment = get_object_or_404(Comment, pk=pk)
+    
+    # Toggle like
     like, created = CommentLike.objects.get_or_create(user=request.user, comment=comment)
     if not created:
         like.delete()
@@ -396,6 +428,14 @@ def toggle_comment_like(request, pk):
     else:
         liked_by_me = True
 
+    # Refresh the comment with prefetched likes for the tooltip
+    comment = Comment.objects.prefetch_related(
+        Prefetch(
+            "likes",
+            queryset=CommentLike.objects.select_related("user", "user__profile")
+        )
+    ).get(pk=pk)
+    
     # Attach flag expected by the partial
     comment.liked_by_me = liked_by_me
 
@@ -445,7 +485,27 @@ def notification_count(request):
 @login_required
 def notification_review(request, activity_id):
     """Show a single review in feed format when clicked from notification."""
-    activity = get_object_or_404(Activity, id=activity_id)
+    activity = get_object_or_404(
+        Activity.objects.prefetch_related(
+            Prefetch(
+                "likes",
+                queryset=Like.objects.select_related("user", "user__profile")
+            ),
+            Prefetch(
+                "comments",
+                queryset=Comment.objects
+                    .select_related("user", "user__profile")
+                    .prefetch_related(
+                        Prefetch(
+                            "likes",
+                            queryset=CommentLike.objects.select_related("user", "user__profile")
+                        )
+                    )
+                    .order_by("created_at")
+            )
+        ),
+        id=activity_id
+    )
 
     # Mark the notification as read if it exists
     Notification.objects.filter(
@@ -459,25 +519,27 @@ def notification_review(request, activity_id):
     if not review:
         return redirect('feed')
 
-    # Get comments for this activity
-    comments = Comment.objects.filter(activity=activity).select_related('user', 'user__profile').order_by('created_at')
+    # Get comments (already prefetched, but keeping for compatibility)
+    comments = list(activity.comments.all())
 
-    # Get likes for this activity
-    likes = Like.objects.filter(activity=activity).select_related('user', 'user__profile')
-
-    # Get comment likes
-    comment_likes = CommentLike.objects.filter(comment__activity=activity).select_related('user', 'user__profile')
+    # Get likes (already prefetched, but keeping for compatibility)
+    likes = list(activity.likes.all())
 
     # Get user's liked activities and comments for template
     user_liked_activities = set(Like.objects.filter(user=request.user, activity=activity).values_list('activity_id', flat=True))
     user_liked_comments = set(CommentLike.objects.filter(user=request.user, comment__activity=activity).values_list('comment_id', flat=True))
+
+    # Add liked_by_me flag to activity
+    activity.liked_by_me = activity.id in user_liked_activities
+    # Add liked_by_me flag to each comment
+    for comment in comments:
+        comment.liked_by_me = comment.id in user_liked_comments
 
     context = {
         'activity': activity,
         'review': review,
         'comments': comments,
         'likes': likes,
-        'comment_likes': comment_likes,
         'user_liked_activities': user_liked_activities,
         'user_liked_comments': user_liked_comments,
         'show_back_button': True,

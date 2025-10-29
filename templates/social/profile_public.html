@@ -271,7 +271,9 @@
                         <span class="font-medium">{{ c.user.username }}</span>
                         <div class="flex items-center gap-2">
                           <span class="text-[11px] text-gray-400">{{ c.created_at|date:"M j, H:i" }}</span>
-                          {% include "social/_comment_like_button.html" with comment=c %}
+                          <div id="comment-like-{{ c.id }}">
+                            {% include "social/_comment_like_button.html" with comment=c %}
+                          </div>
                         </div>
                       </div>
                       <div class="text-gray-800 break-words mt-1">{{ c.text }}</div>
