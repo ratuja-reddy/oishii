@@ -1,0 +1,91 @@
+name,cuisine,website,price,category,address,lat,lon
+Le Servan,Modern French / French-Asian fusion,https://leservan.fr,$$$,Restaurant,"32 Rue Saint-Maur, 75011 Paris",48.86101559999999,2.3814506
+Septime,Contemporary French,https://www.septime-charonne.fr,$$$$,Restaurant,"80 Rue de Charonne, 75011 Paris",48.85357740000001,2.380852
+Yam’Tcha,French / Asian fusion,https://www.yamtcha.com,$$$,Restaurant,"121 Rue Saint-Honoré, 75001 Paris",48.8614427,2.3417022
+Le Grand Restaurant – Jean-François Piège,French fine dining,https://www.legrandrestaurant.com,$$$$,Restaurant,"7 Rue d’Aguesseau, 75008 Paris",48.87014449999999,2.3191607
+L’As du Fallafel,Israeli / Jewish,,$$,Street Food,"34 Rue des Rosiers, 75004 Paris",48.8574025,2.3592069
+Pizza Julia,Italian / Pizza,,$,Restaurant,"43 Rue de Charenton, 75012 Paris",48.8518305,2.3720244
+Mian Fan Dumpling Factory Paris 2,Chinese / Asian,,$,Restaurant,"9 Rue Saint-Augustin, 75002 Paris",48.8687364,2.337345
+Angelina Paris,French / Pastry / Tea room,https://www.angelina-paris.fr,$$,Bakery,"226 Rue de Rivoli, 75001 Paris",48.86509,2.3284557
+Au P’tit Grec,Sandwiches / French street food,,$,Street Food,"68-70 Rue des Écoles, 75005 Paris",48.8501846,2.3433515
+Le Taillevent,French fine dining,https://www.taillevent.com,$$$$,Restaurant,"15 Rue Lamennais, 75008 Paris",48.8741266,2.3024802
+Frenchie,Modern French,https://www.frenchie-restaurant.com,$$$,Restaurant,"5-6 Rue du Nil, 75002 Paris",48.8677208,2.3479717
+L’Ambroisie,Classic French,https://www.restaurant-ambroisie.fr,$$$$,Restaurant,"9 Place des Vosges, 75004 Paris",48.8553584,2.3642182
+Le Chateaubriand,Modern French,https://lechateaubriand.net,$$$,Restaurant,"129 Avenue Parmentier, 75011 Paris",48.8693263,2.3712603
+Clamato,Seafood / Contemporary,https://www.clamato-charonne.fr,$$$,Restaurant,"80 Rue de Charonne, 75011 Paris",48.85357740000001,2.380852
+Bistrot Paul Bert,Traditional French,,$$,Restaurant,"18 Rue Paul Bert, 75011 Paris",48.8522217,2.3849707
+Café de Flore,French Café,https://cafedeflore.fr,$$,Cafe,"172 Boulevard Saint-Germain, 75006 Paris",48.8541588,2.3326046
+Les Deux Magots,French Café / Brasserie,https://www.lesdeuxmagots.fr,$$,Cafe,"6 Place Saint-Germain-des-Prés, 75006 Paris",48.854085,2.3330013
+Le Procope,Historic French brasserie,https://www.procope.com,$$,Restaurant,"13 Rue de l’Ancienne Comédie, 75006 Paris",48.8530639,2.3388234
+Le Cinq,French fine dining,https://www.fourseasons.com/paris/dining/restaurants/le_cinq,$$$$,Restaurant,"31 Avenue George V, 75008 Paris",48.8688365,2.3008263
+Epicure,French haute cuisine,https://www.oetkercollection.com/hotels/le-bristol-paris/restaurants-bars/epicure,$$$$,Restaurant,"112 Rue du Faubourg Saint-Honoré, 75008 Paris",48.871991,2.314957
+Le Relais de l’Entrecôte,French steakhouse,https://www.relaisentrecote.fr,$$,Restaurant,"15 Rue Marbeuf, 75008 Paris",48.8681723,2.302794
+Chez Janou,Provençal French,https://www.chezjanou.com,$$,Restaurant,"2 Rue Roger Verlomme, 75003 Paris",48.8567307,2.3672032
+Breizh Café,Breton crêperie,https://breizhcafe.com,$$,Cafe,"109 Rue Vieille du Temple, 75003 Paris",48.8606239,2.3618184
+Boulangerie Poilâne,Bakery / French bread,https://www.poilane.com,$,Bakery,"8 Rue du Cherche-Midi, 75006 Paris",48.8512356,2.328827
+Du Pain et des Idées,Bakery / Artisan bread,https://dupainetdesidees.com,$,Bakery,"34 Rue Yves Toudic, 75010 Paris",48.8712161,2.3629596
+Fragments,Coffee / Brunch,https://www.instagram.com/fragmentsparis,$$,Cafe,"76 Rue des Tournelles, 75003 Paris",48.8579733,2.3674165
+Holybelly 5,Brunch / Australian,https://holybellycafe.com,$$,Cafe,"5 Rue Lucien Sampaix, 75010 Paris",48.8710385,2.3596747
+Hardware Société,Brunch / French-Australian,https://www.hardwaresociete.com,$$,Cafe,"10 Rue Lamarck, 75018 Paris",48.8868823,2.3446146
+Le Barav,Wine bar / French,https://www.lebarav.fr,$$,Bar,"6 Rue Charles-François Dupuis, 75003 Paris",48.8652018,2.3632561
+Experimental Cocktail Club,Cocktail bar,https://www.experimentalcocktailclub.com,$$$,Bar,"37 Rue Saint-Sauveur, 75002 Paris",48.8660456,2.3481986
+Chez L’Ami Jean,Basque / French,https://www.chezlamijean.fr,$$$,Restaurant,"27 Rue Malar, 75007 Paris",48.8602973,2.3060159
+Le Comptoir du Relais,Traditional French,https://www.hotel-paris-relais-saint-germain.com/le-comptoir,$$$,Restaurant,"9 Carrefour de l’Odéon, 75006 Paris",48.8519756,2.3388371
+La Fontaine de Mars,Classic French,https://www.fontainedemars.com,$$$,Restaurant,"129 Rue Saint-Dominique, 75007 Paris",48.8583982,2.3025519
+Le Jules Verne,French fine dining,https://www.restaurants-toureiffel.com,$$$$,Restaurant,"Eiffel Tower, Champ de Mars, 75007 Paris",48.85837009999999,2.2944813
+Restaurant Guy Savoy,French fine dining,https://www.guysavoy.com,$$$$,Restaurant,"Monnaie de Paris, 11 Quai de Conti, 75006 Paris",48.8566831,2.3390526
+Le Meurice Alain Ducasse,French haute cuisine,https://www.alainducasse-meurice.com,$$$$,Restaurant,"228 Rue de Rivoli, 75001 Paris",48.8653546,2.3282186
+L’Arpège,Vegetarian / French fine dining,https://www.alain-passard.com,$$$$,Restaurant,"84 Rue de Varenne, 75007 Paris",48.8557424,2.3170492
+Le Dôme,Seafood / Brasserie,https://www.ledomeparis.com,$$$,Restaurant,"108 Boulevard du Montparnasse, 75014 Paris",48.8420072,2.3289451
+Chez Georges,Classic bistro French,,$$,Restaurant,"1 Rue du Mail, 75002 Paris",48.8666522,2.3414893
+Le Train Bleu,Historic brasserie / French,https://www.le-train-bleu.com,$$$,Restaurant,"Gare de Lyon, Place Louis-Armand, 75012 Paris",48.84430380000001,2.3743773
+Candelaria,Mexican / Tacos / Cocktails,https://www.quixotic-projects.com/candelaria,$$,Bar,"52 Rue de Saintonge, 75003 Paris",48.8629898,2.3639921
+Les Enfants du Marché,French market cuisine,https://lesenfantsdumarcheparis.com,$$,Restaurant,"Marché des Enfants Rouges, 39 Rue de Bretagne, 75003 Paris",48.8628656,2.3620448
+Big Mamma East Mamma,Italian / Pizza,https://www.bigmammagroup.com/trattorias/east-mamma,$$,Restaurant,"133 Rue du Faubourg Saint-Antoine, 75011 Paris",48.851042,2.3777771
+Pink Mamma,Italian / Steakhouse,https://www.bigmammagroup.com/trattorias/pink-mamma,$$,Restaurant,"20bis Rue de Douai, 75009 Paris",48.88192009999999,2.3345111
+Carboni’s,Italian / Modern,https://www.carbonis.paris,$$$,Restaurant,"45 Rue Saint-Sébastien, 75011 Paris",48.8618209,2.3716149
+El Nopal Taqueria,Mexican street food,,$,Street Food,"3 Rue Eugène Varlin, 75010 Paris",48.8778058,2.3650967
+Shabour,Israeli / Mediterranean,https://www.shabourparis.com,$$$,Restaurant,"19 Rue Saint-Saveur, 75002 Paris",48.8659211,2.3490668
+Daroco,Italian / Modern,https://www.daroco.fr,$$$,Restaurant,"6 Rue Vivienne, 75002 Paris",48.8671334,2.3393262
+Ober Mamma,Italian / Trattoria,https://www.bigmammagroup.com/trattorias/ober-mamma,$$,Restaurant,"107 Boulevard Richard-Lenoir, 75011 Paris",48.8644263,2.3702299
+Kunitoraya,Japanese / Udon,https://www.kunitoraya.com,$$,Restaurant,"1 Rue Villedo, 75001 Paris",48.8659238,2.3368028
+Kodawari Ramen,Japanese / Ramen,https://www.kodawari-ramen.com,$$,Restaurant,"29 Rue Mazarine, 75006 Paris",48.85466049999999,2.3381515
+Clown Bar,Modern French / Wine bar,https://www.clownbar.fr,$$$,Bar,"114 Rue Amelot, 75011 Paris",48.8636037,2.3672614
+Les Papilles,French bistro,https://www.lespapillesparis.fr,$$,Restaurant,"30 Rue Gay-Lussac, 75005 Paris",48.84455639999999,2.3416882
+Maison Sauvage,Brunch / French café,https://maisonsauvage.paris,$$,Cafe,"5 Rue de Buci, 75006 Paris",48.8536629,2.3380554
+Fragments 2,Coffee / Brunch,https://www.instagram.com/fragmentsparis,$$,Cafe,"11 Rue des Coutures Saint-Gervais, 75003 Paris",48.8602964,2.3618184
+Boot Café,Coffee shop,,$,Cafe,"19 Rue du Pont aux Choux, 75003 Paris",48.86117890000001,2.3653861
+KB Coffee Roasters,Coffee / Brunch,https://www.kbcoffeeroasters.com,$$,Cafe,"53 Avenue Trudaine, 75009 Paris",48.8806574,2.3407528
+La Caféothèque,Coffee / Tea,https://www.lacafeotheque.com,$$,Cafe,"52 Rue de l’Hôtel de Ville, 75004 Paris",48.8544534,2.3557921
+Le Mary Celeste,Cocktails / Oysters,https://www.lemaryceleste.com,$$$,Bar,"1 Rue Commines, 75003 Paris",48.861702,2.364957
+Le Syndicat,Cocktail bar,https://www.lesyndicat.com,$$$,Bar,"51 Rue du Faubourg Saint-Denis, 75010 Paris",48.8718637,2.3536501
+Chez Omar,Moroccan / North African,,$$,Restaurant,"47 Rue de Bretagne, 75003 Paris",48.86325790000001,2.3613147
+Le Petit Cler,French bistro,https://lepetitcler.com,$$,Restaurant,"29 Rue Cler, 75007 Paris",48.8574585,2.3062964
+Au Passage,Modern French / Tapas,https://www.aupassageparis.fr,$$,Restaurant,"1bis Passage Saint-Sébastien, 75011 Paris",48.8617174,2.3689159
+Ellsworth,Modern French / Brunch,https://www.ellsworthparis.com,$$,Restaurant,"34 Rue de Richelieu, 75001 Paris",48.8655658,2.3369588
+Le Dauphin,Contemporary French,https://ledauphinparis.com,$$$,Restaurant,"131 Avenue Parmentier, 75011 Paris",48.8694795,2.3711865
+La Bourse et la Vie,Classic French bistro,https://labourselavie.com,$$$,Restaurant,"12 Rue Vivienne, 75002 Paris",48.8676204,2.3395636
+Le Pantruche,Traditional French,https://lepantruche.com,$$$,Restaurant,"3 Rue Victor Massé, 75009 Paris",48.880442,2.3397123
+Semilla,French contemporary,https://semilla.fr,$$$,Restaurant,"54 Rue de Seine, 75006 Paris",48.8541654,2.3365288
+Fish La Boissonnerie,Seafood / French,https://fishlaboissonnerie.net,$$$,Restaurant,"69 Rue de Seine, 75006 Paris",48.8542192,2.3370613
+Balagan,Israeli / Mediterranean,https://www.balaganparis.com,$$$,Restaurant,"9 Rue d’Alger, 75001 Paris",48.865471,2.3296613
+Racines,Italian / Natural wine,https://racinesparis.fr,$$$,Restaurant,"8 Passage des Panoramas, 75002 Paris",48.87123030000001,2.3418785
+Bouillon Pigalle,Traditional French / Budget,https://www.bouillonpigalle.com,$,Restaurant,"22 Boulevard de Clichy, 75018 Paris",48.8826532,2.3374644
+Bouillon Chartier,Classic French / Budget,https://www.bouillon-chartier.com,$,Restaurant,"7 Rue du Faubourg Montmartre, 75009 Paris",48.8720446,2.342513
+Chez Gladines,Basque / Casual,https://www.chezgladines.com,$$,Restaurant,"30 Rue des cinq Diamants, 75013 Paris",48.8288045,2.3505897
+Les Antiquaires,Traditional French,https://www.lesantiquairesparis.fr,$$,Restaurant,"13 Rue du Bac, 75007 Paris",48.8586214,2.3287289
+Le Petit Cambodge,Cambodian / Asian,https://www.lepetitcambodge.fr,$$,Restaurant,"20 Rue Alibert, 75010 Paris",48.8716783,2.3681143
+Pho 14,Vietnamese / Pho,,$,Restaurant,"129 Avenue de Choisy, 75013 Paris",48.8263845,2.3595231
+Dong Huong,Vietnamese,,$,Restaurant,"14 Rue Louis Bonnet, 75011 Paris",48.8712396,2.3768795
+Hokkaido,Japanese / Ramen,,$,Restaurant,"14 Rue Chabanais, 75002 Paris",48.8676814,2.3371731
+Miznon,Israeli street food,https://www.miznon.fr,$$,Street Food,"22 Rue des Ecouffes, 75004 Paris",48.85712239999999,2.3589963
+Urfa Dürüm,Turkish street food,,$,Street Food,"58 Rue du Faubourg Saint-Denis, 75010 Paris",48.8724242,2.3542831
+Ibrik Café,Romanian / Coffee,https://www.ibrikcafe.com,$$,Cafe,"43 Rue Laffitte, 75009 Paris",48.8752426,2.3383164
+Coutume Café,Coffee / Brunch,https://www.coutumecafe.com,$$,Cafe,"47 Rue de Babylone, 75007 Paris",48.8516207,2.3183697
+Matamata Coffee,Coffee / Brunch,https://www.matamata-coffee.com,$$,Cafe,"58 Rue d’Argout, 75002 Paris",48.8661104,2.3441451
+Café Kitsuné,Coffee / Japanese-French,https://www.cafekitsune.com,$$,Cafe,"51 Galerie de Montpensier, 75001 Paris",48.8655731,2.3372512
+Café Verlet,Coffee / Tea,https://cafeverlet.fr,$$,Cafe,"256 Rue Saint-Honoré, 75001 Paris",48.8641731,2.3338647
+Ten Belles,Coffee / Brunch,https://www.tenbelles.com,$$,Cafe,"10 Rue de la Grange aux Belles, 75010 Paris",48.8735501,2.3648351
+Maison Landemaine,Bakery / Pâtisserie,https://www.maisonlandemaine.com,$,Bakery,"26 Rue de la Convention, 75015 Paris",48.8448747,2.2793053
+Ducoin Café,Casual French,,$$,Cafe,"38 Rue de la Tour d’Auvergne, 75009 Paris",48.8796046,2.3420472
+La Felicità,Italian food hall,https://www.lafelicita.fr,$$,Restaurant,"5 Parvis Alan Turing, 75013 Paris",48.8334931,2.3718951

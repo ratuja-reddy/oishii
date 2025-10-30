@@ -12,7 +12,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--csv-file',
             type=str,
-            default='scripts/london_trendy_restaurants_100_with_coordinates.csv',
+            default='scripts/paris_restaurants_with_coordinates.csv',
             help='Path to the CSV file containing restaurant data'
         )
 
